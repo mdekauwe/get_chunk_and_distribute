@@ -944,7 +944,7 @@ void write_spinup_file(int i, int j, control *c, met *m, float *tmax_ij,
                           1969,2006,1986,1950,1988};
     int len_shuffled_yrs = 50;
 
-    sprintf(ofname, "outputs/spinup/met_spinup_%d_%d.csv", i, j);
+    sprintf(ofname, "met_data/met_spinup_%d_%d.csv", i, j);
     ofp = fopen(ofname, "wb");
 
     latitude = c->yllcorner + (i * c->cellsize);
@@ -1069,7 +1069,7 @@ void write_forcing_file(int i, int j, control *c, met *m, float *tmax_ij,
     float MJ_TO_J = 1.0 / 1.0E-6;
     float J_TO_UMOL = 4.6;
     float SW_TO_PAR = 0.48;
-    sprintf(ofname, "outputs/forcing/met_forcing_%d_%d.csv", i, j);
+    sprintf(ofname, "met_data/met_forcing_%d_%d.csv", i, j);
 
     ofp = fopen(ofname, "wb");
 
