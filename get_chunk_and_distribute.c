@@ -920,7 +920,8 @@ void write_spinup_file(int i, int j, control *c, met *m, float *tmax_ij,
     time_t current_time;
     char*  c_time_string;
     FILE  *ofp;
-    int    doy_cnt, date_offset;
+    long  date_offset;
+    int   doy_cnt;
     int   k=0, kk, yr_to_get, st_idx, en_idx, ndays, year;
     float co2=0.0, ndep=0.0, wind_sp=0.0, atpress=0.0, wind_am=0.0;
     float wind_pm=0.0, vpd_avg=0.0, par_day=0.0, sw_am=0.0;
@@ -975,6 +976,7 @@ void write_spinup_file(int i, int j, control *c, met *m, float *tmax_ij,
         date_offset = 0;
         for (kk = 0; kk < m->tmax_ndays; kk++) {
             year = m->tmax_dates[date_offset];
+            printf("*%d %d %ld\n", yr_to_get, year, date_offset);
             if (year == yr_to_get) {
                 st_idx = kk;
                 if (is_leap_year(yr_to_get)) {
@@ -990,6 +992,7 @@ void write_spinup_file(int i, int j, control *c, met *m, float *tmax_ij,
         }
         doy_cnt = 0;
         for (kk = st_idx; kk < en_idx; kk++) {
+            printf("**%d %d\n", st_idx, en_idx);
             day_length = calc_day_length(kk, ndays, latitude);
             if (kk+1 > en_idx)
                 tmin_tomorrow = tmin_ij[kk];
@@ -1039,6 +1042,9 @@ void write_spinup_file(int i, int j, control *c, met *m, float *tmax_ij,
 
              doy_cnt++;
         }
+        
+        exit(1); /* debug */
+        
     }
     fclose(ofp);
 
