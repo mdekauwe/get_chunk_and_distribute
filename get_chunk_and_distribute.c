@@ -1074,7 +1074,7 @@ void write_forcing_file(int i, int j, control *c, met *m, float *tmax_ij,
     ofp = fopen(ofname, "wb");
 
     latitude = c->yllcorner + (i * c->cellsize);
-    longitude = c->xllcorner + (j  * c->cellsize);
+    longitude = c->xllcorner + (j * c->cellsize);
 
 
     current_time = time(NULL);
