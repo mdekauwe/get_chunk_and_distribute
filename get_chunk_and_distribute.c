@@ -31,8 +31,8 @@
 
 int main(int argc, char **argv)
 {
-    int    i, j, k, doy, date_offset, idx, offset_1, offset_2;
-    long   offset = 0;
+    int    i, j, k, doy, idx;
+    long   offset = 0, date_offset, offset_1, offset_2;
     float *land_mask = NULL;
     float *tmax_ij = NULL;
     float *tmin_ij = NULL;
@@ -1072,9 +1072,9 @@ void write_forcing_file(int i, int j, control *c, met *m, float *tmax_ij,
     time_t current_time;
     char*  c_time_string;
     FILE *ofp;
-
-    int k=0, kk, jj, yr_to_get, st_idx, en_idx, ndays, doy_cnt, year,
-        date_offset, st_idx_rad;
+    
+    long date_offset;
+    int k=0, kk, jj, yr_to_get, st_idx, en_idx, ndays, doy_cnt, year,st_idx_rad;
     float co2=0.0, ndep=0.0, wind_sp=0.0, atpress=0.0, wind_am=0.0;
     float wind_pm=0.0, vpd_avg=0.0, par_day=0.0, sw_am=0.0;
     float Tmean=0.0, Tsoil=0.0, vpd_am=0.0, vpd_pm=0.0;
