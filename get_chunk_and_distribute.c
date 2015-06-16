@@ -308,7 +308,7 @@ void initialise_stuff(control *c) {
     c->end_yr_rad = 2011;
 
 
-    strcpy(c->fdir, "raw_AWAP_data");
+    strcpy(c->fdir, "AWAP_data");
 
 
     return;
