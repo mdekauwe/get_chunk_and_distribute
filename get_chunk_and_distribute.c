@@ -224,7 +224,7 @@ int main(int argc, char **argv)
         for (doy = 0; doy < m->rad_ndays; doy++) {
             years_ij_rad[idx] = m->rad_dates[date_offset];
             rad_ij[idx] = m->rad_slice[offset_2];
-
+            
             date_offset += 3;
             offset_2++;
             idx++;
@@ -787,7 +787,8 @@ void build_radiation_clim(control *c, int *rad_dates, float *rad,
        forcing, so we need to build a climatology to effectively gap fill for
        the spin up files
     */
-    int   date_offset, doy, yr, year, month, day, ndays;
+    long  date_offset, date_offset2;
+    int   doy, yr, year, month, day, ndays;
     int   jan_ndays = 0, feb_ndays = 0, mar_ndays = 0, apr_ndays = 0;
     int   may_ndays = 0, jun_ndays = 0, jul_ndays = 0, aug_ndays = 0;
     int   sep_ndays = 0, oct_ndays = 0, nov_ndays = 0, dec_ndays = 0;
@@ -795,6 +796,7 @@ void build_radiation_clim(control *c, int *rad_dates, float *rad,
     float jul = 0.0, aug = 0.0, sep = 0.0, oct = 0.0, nov = 0.0, dec = 0.0;
 
     date_offset = 0;
+    date_offset2 = 0;
     for (yr = c->start_yr_rad; yr <= c->end_yr_rad; yr++) {
         if (is_leap_year(yr)) {
             ndays = 366;
@@ -810,43 +812,43 @@ void build_radiation_clim(control *c, int *rad_dates, float *rad,
             date_offset += 3;
 
             if (month == 1) {
-                jan += rad[doy];
+                jan += rad[date_offset2];
                 jan_ndays++;
             } else if (month == 2) {
-                feb += rad[doy];
+                feb += rad[date_offset2];
                 feb_ndays++;
             } else if (month == 3) {
-                mar += rad[doy];
+                mar += rad[date_offset2];
                 mar_ndays++;
             } else if (month == 4) {
-                apr += rad[doy];
+                apr += rad[date_offset2];
                 apr_ndays++;
             } else if (month == 5) {
-                may += rad[doy];
+                may += rad[date_offset2];
                 may_ndays++;
             } else if (month == 6) {
-                jun += rad[doy];
+                jun += rad[date_offset2];
                 jun_ndays++;
             } else if (month == 7) {
-                jul += rad[doy];
+                jul += rad[date_offset2];
                 jul_ndays++;
             } else if (month == 8) {
-                aug += rad[doy];
+                aug += rad[date_offset2];
                 aug_ndays++;
             } else if (month == 9) {
-                sep += rad[doy];
+                sep += rad[date_offset2];
                 sep_ndays++;
             } else if (month == 10) {
-                oct += rad[doy];
+                oct += rad[date_offset2];
                 oct_ndays++;
             } else if (month == 11) {
-                nov += rad[doy];
+                nov += rad[date_offset2];
                 nov_ndays++;
             } else if (month == 12) {
-                dec += rad[doy];
+                dec += rad[date_offset2];
                 dec_ndays++;
             }
-
+            date_offset2++;
         }
     }
 
@@ -877,6 +879,8 @@ void build_radiation_clim(control *c, int *rad_dates, float *rad,
             (*rad_clim_nonleap)[doy] = dec / (float)dec_ndays;
         }
     }
+    
+    
 
     for (doy = 0; doy < 366; doy++) {
         if (doy >= 0 && doy < 31) {
@@ -937,6 +941,8 @@ void write_spinup_file(int i, int j, control *c, met *m, float *tmax_ij,
     int len_shuffled_yrs = 1;
     int shuffled_yrs[] = {1990};
     */
+    
+    /*
     int shuffled_yrs[] = {1968,1958,1981,1983,1999,1965,1994,2004,1995,
                           1974,1959,2009,1964,1985,1957,1980,2010,2007,
                           1990,1997,1973,1993,1989,1984,1955,1987,1966,
@@ -944,7 +950,11 @@ void write_spinup_file(int i, int j, control *c, met *m, float *tmax_ij,
                           1963,2005,1960,1992,2000,1998,1954,1977,1962,
                           1969,2006,1986,1950,1988};
     int len_shuffled_yrs = 50;
-
+    */
+    
+    int len_shuffled_yrs = 1;
+    int shuffled_yrs[] = {1990};
+    
     sprintf(ofname, "met_data/met_spinup_%d_%d.csv", i, j);
     ofp = fopen(ofname, "wb");
 
@@ -976,7 +986,7 @@ void write_spinup_file(int i, int j, control *c, met *m, float *tmax_ij,
         date_offset = 0;
         for (kk = 0; kk < m->tmax_ndays; kk++) {
             year = m->tmax_dates[date_offset];
-            printf("*%d %d %ld\n", yr_to_get, year, date_offset);
+            /*printf("*%d %d %ld\n", yr_to_get, year, date_offset);*/
             if (year == yr_to_get) {
                 st_idx = kk;
                 if (is_leap_year(yr_to_get)) {
@@ -992,7 +1002,7 @@ void write_spinup_file(int i, int j, control *c, met *m, float *tmax_ij,
         }
         doy_cnt = 0;
         for (kk = st_idx; kk < en_idx; kk++) {
-            printf("**%d %d\n", st_idx, en_idx);
+            /*printf("**%d %d\n", st_idx, en_idx);*/
             day_length = calc_day_length(kk, ndays, latitude);
             if (kk+1 > en_idx)
                 tmin_tomorrow = tmin_ij[kk];
@@ -1043,7 +1053,7 @@ void write_spinup_file(int i, int j, control *c, met *m, float *tmax_ij,
              doy_cnt++;
         }
         
-        exit(1); /* debug */
+        
         
     }
     fclose(ofp);
