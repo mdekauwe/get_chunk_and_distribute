@@ -1083,7 +1083,7 @@ void write_forcing_file(int i, int j, control *c, met *m, float *tmax_ij,
     fprintf(ofp, "# Daily met: Row:%d x Col:%d\n", i, j);
     fprintf(ofp, "#            Lat:%f x Lon:%f\n", latitude, longitude);
     fprintf(ofp, "# Created by Martin De Kauwe: %s", c_time_string);
-    fprintf(ofp, "#--',--,mj/m2/day,c,mm,c,c,c,kPa,kPa,kPa,ppm,t/ha/year,");
+    fprintf(ofp, "#--,--,mj/m2/day,c,mm,c,c,c,kPa,kPa,kPa,ppm,t/ha/year,");
     fprintf(ofp, "m/s,kPa,umol/m2/d,m/s,m/s,mj/m2/am,mj/m2/pm\n");
     fprintf(ofp, "#year,doy,sw_rad,tair,rain,tsoil,tam,tpm,vpd_am,vpd_pm,");
     fprintf(ofp, "vpd_avg,co2,ndep,wind,atmos_press,par,wind_am,wind_pm,");
