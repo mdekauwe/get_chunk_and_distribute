@@ -213,7 +213,7 @@ int main(int argc, char **argv)
             rain_ij[idx] = m->rain_slice[offset_1],
             vph09_ij[idx] = m->vph09_slice[offset_1],
             vph15_ij[idx] = m->vph15_slice[offset_1],
-
+            /*printf("%d %d:%d %f\n", m->tmax_ndays, doy, tmax_ij[idx]);*/
             date_offset += 3;
             offset_1++;
             idx++;
@@ -221,11 +221,10 @@ int main(int argc, char **argv)
 
         idx = 0;
         date_offset = 0;
-        
         for (doy = 0; doy < m->rad_ndays; doy++) {
             years_ij_rad[idx] = m->rad_dates[date_offset];
             rad_ij[idx] = m->rad_slice[offset_2];
-            printf("** %d %f %ld\n", m->rad_ndays, m->rad_slice[offset_2], offset_2);
+            /*printf("%d:%d %f %ld\n", m->rad_ndays, doy, m->rad_slice[offset_2], offset_2);*/
             date_offset += 3;
             offset_2++;
             idx++;
@@ -407,6 +406,7 @@ void read_met_data_slice(control *c, met *m, int *land_ij) {
 
     if (c->rank == c->root_processor) {
         get_data(c, "tmin", m->tmin_ndays, &met_data, &m->tmin_dates, land_ij);
+    
     }
 
     if (MPI_Bcast(&(*m->tmin_dates), m->tmin_ndays*3, MPI_INT, c->root_processor,
@@ -509,7 +509,7 @@ void read_met_data_slice(control *c, met *m, int *land_ij) {
     if (c->rank == c->root_processor) {
         get_data(c, "rad", m->rad_ndays, &met_data, &m->rad_dates, land_ij);
     }
-
+    
     if (MPI_Bcast(&(*m->rad_dates), m->rad_ndays*3, MPI_INT, c->root_processor,
                   MPI_COMM_WORLD) != MPI_SUCCESS) {
         fprintf(stderr, "Error broadcasting rad_dates\n");
@@ -518,15 +518,9 @@ void read_met_data_slice(control *c, met *m, int *land_ij) {
     m->rad_size = distribute(c, land_ij, met_data, &m->rad_slice, tag6,
                               m->rad_ndays);
     
-    int k = 0;
-    for (k=0; k<m->rad_size;k++) {
-        printf("DOOO %f\n", m->rad_slice[k]);
-    }
-    printf("DOOO %d\n", m->rad_ndays);
-    
     free(met_data);
     met_data = NULL;
-
+    
     return;
 }
 
@@ -565,8 +559,6 @@ void get_data(control *c, char *met_var, int total_days, float **met_data,
         start_yr = c->start_yr;
         end_yr = c->end_yr;
     }
-    
-    printf("%d %d\n", start_yr, end_yr);
 
     dt_cnt = 0;
     day_cnt = 0;
@@ -578,11 +570,8 @@ void get_data(control *c, char *met_var, int total_days, float **met_data,
             ndays = 365;
             days_in_month[2] = 28;
         }
-
 	    for (mth = 1; mth <= 12; mth++) {
-
 	        for (day = 1; day <= days_in_month[mth]; day++) {
-
 	            if (day < 10)
 	                sprintf(iday, "0%d", day);
 	            else
@@ -604,7 +593,6 @@ void get_data(control *c, char *met_var, int total_days, float **met_data,
 	                sprintf(infname, "%s/%s/%d%s%s_%s.flt",
 	                        c->fdir, met_var, yr, imth, iday, met_var);
 	            }
-	            /*printf("%s\n", infname);*/
 
                 /* read the file file */
                 if ((fp = fopen(infname, "r")) == NULL) {
@@ -626,15 +614,26 @@ void get_data(control *c, char *met_var, int total_days, float **met_data,
                     j = land_ij[k+1];
 
                     in_offset = i * c->ncols + j;
-                    out_offset = index + day_cnt;
+                    /*out_offset = index + day_cnt;*/
+                    out_offset = (day_cnt * c->num_land_pixels) + \
+                                 ((i - c->row_start) * c->ncols + j);
+                    
                     (*met_data)[out_offset] = met_data_day[in_offset];
                     index += ndays;
-
+                    
+                    /*printf("%d %d - %f %f %ld %s\n",
+                            i, j, (*met_data)[out_offset],
+                            met_data_day[in_offset], out_offset, met_var);
+                    */
+                    
                     /*printf("%d %d %d - %f %f %ld %s\n",
                             ii, i, j, (*met_data)[out_offset],
                             met_data_day[in_offset], out_offset, met_var);*/
                 }
-
+                
+                
+                
+                
                 /*
                 for (k = 0; k < c->num_land_pixels * 2; k+=2) {
                     i = land_ij[k],
@@ -659,7 +658,9 @@ void get_data(control *c, char *met_var, int total_days, float **met_data,
     }
 
     free(met_data_day);
-
+    
+    
+    
     return ;
 }
 
