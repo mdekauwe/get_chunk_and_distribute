@@ -19,7 +19,7 @@
 **              mpirun -np 8 get_chunk_and_distribute -s 300 -e 301
 **                     
 **
-** AUTHOR:      Martin De Kauwe
+** AUTHOR:      Martin De Kauwe with MPI assistance from Andrey Bliznyuk @NCI
 **
 ** EMAIL:       mdekauwe@gmail.com
 **
@@ -221,10 +221,11 @@ int main(int argc, char **argv)
 
         idx = 0;
         date_offset = 0;
+        
         for (doy = 0; doy < m->rad_ndays; doy++) {
             years_ij_rad[idx] = m->rad_dates[date_offset];
             rad_ij[idx] = m->rad_slice[offset_2];
-            
+            printf("** %d %f %ld\n", m->rad_ndays, m->rad_slice[offset_2], offset_2);
             date_offset += 3;
             offset_2++;
             idx++;
@@ -302,11 +303,16 @@ void initialise_stuff(control *c) {
     c->xllcorner = 111.975;
     c->yllcorner = -44.025;
 
-    c->start_yr = 1950;
+    /*c->start_yr = 1950;
     c->end_yr = 2011;
     c->start_yr_rad = 1990;
+    c->end_yr_rad = 2011;*/
+    
+    
+    c->start_yr = 1950;
+    c->end_yr = 1952;
+    c->start_yr_rad = 1990;
     c->end_yr_rad = 2011;
-
 
     strcpy(c->fdir, "AWAP_data");
 
@@ -342,25 +348,29 @@ void read_met_data_slice(control *c, met *m, int *land_ij) {
 
     /*
         Count the number of days to size arrays
-        For the Rad data the timeseries is shorter, 1990-2011, as opposed to 
-        1950-2011 so we need to build a shorter array.
     */
     total_days = 0;
-    total_days_rad = 0;
     for (yr = c->start_yr; yr <= c->end_yr; yr++) {
         if (is_leap_year(yr)) {
             total_days += 366;
-            if (yr >= c->start_yr_rad && yr <=c->end_yr_rad) {
-                total_days_rad += 366;
-            }
         } else {
             total_days += 365;
-            if (yr >= c->start_yr_rad && yr <=c->end_yr_rad) {
-                total_days_rad += 365;
-            }
         }
     }
-
+    
+    /*
+        Count the number of days to size arrays
+        For the Rad data the timeseries is shorter, 1990-2011, as opposed to 
+        1950-2011 so we need to build a shorter array.
+    */
+    total_days_rad = 0;
+    for (yr = c->start_yr_rad; yr <= c->end_yr_rad; yr++) {
+        if (is_leap_year(yr)) {
+            total_days_rad += 366;
+        } else {
+            total_days_rad += 365;
+        }
+    }
 
     /*
     ** Tmax
@@ -507,6 +517,13 @@ void read_met_data_slice(control *c, met *m, int *land_ij) {
     }
     m->rad_size = distribute(c, land_ij, met_data, &m->rad_slice, tag6,
                               m->rad_ndays);
+    
+    int k = 0;
+    for (k=0; k<m->rad_size;k++) {
+        printf("DOOO %f\n", m->rad_slice[k]);
+    }
+    printf("DOOO %d\n", m->rad_ndays);
+    
     free(met_data);
     met_data = NULL;
 
@@ -541,11 +558,15 @@ void get_data(control *c, char *met_var, int total_days, float **met_data,
          MPI_Abort(MPI_COMM_WORLD, -1);
     }
 
-    if ((strncmp(met_var, "rad", 3) == 0))
+    if ((strncmp(met_var, "rad", 3) == 0)) {
         start_yr = c->start_yr_rad;
-    else
+        end_yr = c->end_yr_rad;
+    } else {
         start_yr = c->start_yr;
-    end_yr = c->end_yr;
+        end_yr = c->end_yr;
+    }
+    
+    printf("%d %d\n", start_yr, end_yr);
 
     dt_cnt = 0;
     day_cnt = 0;
@@ -814,6 +835,7 @@ void build_radiation_clim(control *c, int *rad_dates, float *rad,
             if (month == 1) {
                 jan += rad[date_offset2];
                 jan_ndays++;
+                /*printf("%f %d %ld\n", rad[date_offset2], jan_ndays, date_offset2);*/
             } else if (month == 2) {
                 feb += rad[date_offset2];
                 feb_ndays++;
@@ -952,10 +974,10 @@ void write_spinup_file(int i, int j, control *c, met *m, float *tmax_ij,
     int len_shuffled_yrs = 50;
     */
     
-    int len_shuffled_yrs = 1;
-    int shuffled_yrs[] = {1990};
+    int len_shuffled_yrs = 3;
+    int shuffled_yrs[] = {1951,1950,1952};
     
-    sprintf(ofname, "met_data/met_spinup_%d_%d.csv", i, j);
+    sprintf(ofname, "met_data/spinup/met_spinup_%d_%d.csv", i, j);
     ofp = fopen(ofname, "wb");
 
     latitude = c->yllcorner + (i * c->cellsize);
@@ -1085,7 +1107,7 @@ void write_forcing_file(int i, int j, control *c, met *m, float *tmax_ij,
     float MJ_TO_J = 1.0 / 1.0E-6;
     float J_TO_UMOL = 4.6;
     float SW_TO_PAR = 0.48;
-    sprintf(ofname, "met_data/met_forcing_%d_%d.csv", i, j);
+    sprintf(ofname, "met_data/forcing/met_forcing_%d_%d.csv", i, j);
 
     ofp = fopen(ofname, "wb");
 
