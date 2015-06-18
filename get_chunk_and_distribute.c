@@ -272,8 +272,10 @@ void clparser(int argc, char **argv, control *c) {
 			    strcpy(c->land_mask_fn, argv[++i]);
 			} else if (!strncasecmp(argv[i], "-s", 2)) {
 			    c->row_start = atoi(argv[++i]);
+			    c->row_start--; /* correct for 0 index */
 			} else if (!strncasecmp(argv[i], "-e", 2)) {
 			    c->row_end = atoi(argv[++i]);
+			    c->row_end--; /* correct for 0 index */
 			} else if (!strncasecmp(argv[i], "-d", 2)) {
 			    c->debug = TRUE;
 			} else {
@@ -301,18 +303,19 @@ void initialise_stuff(control *c) {
     c->cellsize = 0.05;
     c->xllcorner = 111.975;
     c->yllcorner = -44.025;
-
+    
+    /*
     c->start_yr = 1950;
     c->end_yr = 2011;
     c->start_yr_rad = 1990;
     c->end_yr_rad = 2011;
+    */
     
-    /*
     c->start_yr = 1950;
     c->end_yr = 1952;
     c->start_yr_rad = 1990;
     c->end_yr_rad = 2011;
-    */
+    
     strcpy(c->fdir, "AWAP_data");
 
 
@@ -965,7 +968,7 @@ void write_spinup_file(int i, int j, control *c, met *m, float *tmax_ij,
     int shuffled_yrs[] = {1990};
     */
     
-    
+    /*
     int shuffled_yrs[] = {1968,1958,1981,1983,1999,1965,1994,2004,1995,
                           1974,1959,2009,1964,1985,1957,1980,2010,2007,
                           1990,1997,1973,1993,1989,1984,1955,1987,1966,
@@ -973,12 +976,12 @@ void write_spinup_file(int i, int j, control *c, met *m, float *tmax_ij,
                           1963,2005,1960,1992,2000,1998,1954,1977,1962,
                           1969,2006,1986,1950,1988};
     int len_shuffled_yrs = 50;
+    */
     
     
-    /*
     int len_shuffled_yrs = 3;
     int shuffled_yrs[] = {1951,1950,1952};
-    */
+    
     
     sprintf(ofname, "met_data/spinup/met_spinup_%d_%d.csv", i, j);
     ofp = fopen(ofname, "wb");
@@ -993,7 +996,7 @@ void write_spinup_file(int i, int j, control *c, met *m, float *tmax_ij,
     fprintf(ofp, "# Created by Martin De Kauwe: %s", c_time_string);
     fprintf(ofp, "#--',--,mj/m2/day,c,mm,c,c,c,kPa,kPa,kPa,ppm,t/ha/year,");
     fprintf(ofp, "m/s,kPa,umol/m2/d,m/s,m/s,mj/m2/am,mj/m2/pm\n");
-    fprintf(ofp, "#year,doy,sw_rad,tair,rain,tsoil,tam,tpm,vpd_am,vpd_pm,");
+    fprintf(ofp, "year,doy,sw_rad,tair,rain,tsoil,tam,tpm,vpd_am,vpd_pm,");
     fprintf(ofp, "vpd_avg,co2,ndep,wind,atmos_press,par,wind_am,wind_pm,");
     fprintf(ofp, "sw_rad_am,sw_rad_pm\n");
 
@@ -1126,7 +1129,7 @@ void write_forcing_file(int i, int j, control *c, met *m, float *tmax_ij,
     fprintf(ofp, "# Created by Martin De Kauwe: %s", c_time_string);
     fprintf(ofp, "#--,--,mj/m2/day,c,mm,c,c,c,kPa,kPa,kPa,ppm,t/ha/year,");
     fprintf(ofp, "m/s,kPa,umol/m2/d,m/s,m/s,mj/m2/am,mj/m2/pm\n");
-    fprintf(ofp, "#year,doy,sw_rad,tair,rain,tsoil,tam,tpm,vpd_am,vpd_pm,");
+    fprintf(ofp, "year,doy,sw_rad,tair,rain,tsoil,tam,tpm,vpd_am,vpd_pm,");
     fprintf(ofp, "vpd_avg,co2,ndep,wind,atmos_press,par,wind_am,wind_pm,");
     fprintf(ofp, "sw_rad_am,sw_rad_pm\n");
 
