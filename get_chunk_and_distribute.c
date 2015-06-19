@@ -197,55 +197,72 @@ int main(int argc, char **argv)
         fprintf(stderr,"Error allocating space for rad_clim_leap_ij array\n");
 		MPI_Abort(MPI_COMM_WORLD, -1);
     }
-
-    offset_1 = 0;
-    offset_2 = 0;
-    for (k = 0; k < npairs; k+=2) {
-
-        i = pairs[k];
-        j = pairs[k+1];
-
-        idx = 0;
-        date_offset = 0;
+    
+    long test_offset;
+    long pixel_counter = 0;
+        
+           
+    /*
+    for (k = 0; k < c->num_land_pixels * 2; k+=2) {
+        
+        printf("%d/%d\n", k, c->num_land_pixels * 2);
+        i = land_ij[k],
+        j = land_ij[k+1];
         for (doy = 0; doy < m->tmax_ndays; doy++) {
-            tmax_ij[idx] = m->tmax_slice[offset_1];
-            tmin_ij[idx] = m->tmin_slice[offset_1],
-            rain_ij[idx] = m->rain_slice[offset_1],
-            vph09_ij[idx] = m->vph09_slice[offset_1],
-            vph15_ij[idx] = m->vph15_slice[offset_1],
-            /*printf("%d %d:%d %f\n", m->tmax_ndays, doy, tmax_ij[idx]);*/
-            date_offset += 3;
-            offset_1++;
-            idx++;
+            if (i == 299 && j == 321) {
+                test_offset = (doy * c->num_land_pixels) + (pixel_counter);
+                printf("%f\n", m->tmax_slice[test_offset]);
+                            
+            }
         }
-
-        idx = 0;
-        date_offset = 0;
-        for (doy = 0; doy < m->rad_ndays; doy++) {
-            years_ij_rad[idx] = m->rad_dates[date_offset];
-            rad_ij[idx] = m->rad_slice[offset_2];
-            /*printf("%d:%d %f %ld\n", m->rad_ndays, doy, m->rad_slice[offset_2], offset_2);*/
-            date_offset += 3;
-            offset_2++;
-            idx++;
-        }
-
-        /* Build a climatology from the radiation data 1990-2011 */
-        build_radiation_clim(c, m->rad_dates, rad_ij, &rad_clim_nonleap_ij,
-                             &rad_clim_leap_ij);
-
-
-        write_spinup_file(i, j, c, m, tmax_ij, tmin_ij, rain_ij, vph09_ij,
-                          vph15_ij, rad_clim_nonleap_ij, rad_clim_leap_ij);
-
-        write_forcing_file(i, j, c, m, tmax_ij, tmin_ij, rain_ij,
-                           vph09_ij, vph15_ij, rad_ij, rad_clim_nonleap_ij,
-                           rad_clim_leap_ij);
+        pixel_counter++;
     }
+    
+    printf("DONE\n");
+    */
+    pixel_counter=0;
+    if (c->rank == c->root_processor) {
+        for (k = 0; k < npairs; k+=2) {
 
+            i = pairs[k];
+            j = pairs[k+1];
+            for (doy = 0; doy < m->tmax_ndays; doy++) {
+                if (i == 299 && j == 321) {
+                    
+                    
+                    test_offset = doy + (i * c->ncols + j);
+                    printf("* %f %ld\n", m->tmax_slice[test_offset], test_offset);
+                }
+            
+            }
+            pixel_counter++;
+            
+            
+            
+        }
+    } else {
+        for (k = 0; k < npairs; k+=2) {
+
+            i = pairs[k];
+            j = pairs[k+1];
+            for (doy = 0; doy < m->tmax_ndays; doy++) {
+                if (i == 299 && j == 321) {
+                     /*test_offset = (doy * c->num_land_pixels) + \
+                                 (105408);*/
+                    test_offset = doy + (i * c->ncols + j);
+                    printf("** %f %ld\n", m->tmax_slice[test_offset], test_offset);
+                }
+            
+            }
+            pixel_counter++;
+        }
+    
+    }
+   
     /* Stop this process */
     mpi_err = MPI_Finalize();
 
+    
     free(c);
     free(m);
     free(land_mask);
@@ -259,7 +276,7 @@ int main(int argc, char **argv)
     free(rad_ij);
     free(rad_clim_nonleap_ij);
     free(rad_clim_leap_ij);
-
+    
     return (EXIT_SUCCESS);
 }
 
@@ -541,13 +558,15 @@ void get_data(control *c, char *met_var, int total_days, float **met_data,
     int   yr, mth, day, ndays, index;
     char  imth[3];
     char  iday[3];
-
+    long pixel_counter;
     char  infname[STRING_LENGTH];
-    if ((*met_data = (float *)calloc(total_days * c->num_land_pixels,
+    
+    if ((*met_data = (float *)calloc(total_days * c->nrows * c->ncols,
                       sizeof(float))) == NULL ) {
         fprintf(stderr, "Error allocating space for met_data array\n");
 
     }
+    
 
     if ((met_data_day = (float *)calloc(c->nrows * c->ncols,
                          sizeof(float))) == NULL) {
@@ -612,42 +631,33 @@ void get_data(control *c, char *met_var, int total_days, float **met_data,
                 fclose(fp);
 
                 index = 0;
+                pixel_counter = 0;
                 for (k = 0; k < c->num_land_pixels * 2; k+=2) {
                     i = land_ij[k],
                     j = land_ij[k+1];
 
                     in_offset = i * c->ncols + j;
-                    /*out_offset = index + day_cnt;*/
-                    out_offset = (day_cnt * c->num_land_pixels) + \
-                                 ((i - c->row_start) * c->ncols + j);
                     
+                    out_offset = day_cnt + (i * c->ncols + j);
                     (*met_data)[out_offset] = met_data_day[in_offset];
-                    index += ndays;
+                    index += total_days;
                     
-                    /*printf("%d %d - %f %f %ld %s\n",
-                            i, j, (*met_data)[out_offset],
-                            met_data_day[in_offset], out_offset, met_var);
+                    /*
+                    if ((strncmp(met_var, "tmax", 3) == 0)) {
+                        if (i == 299 && j == 321) {
+                            printf("%f %ld %d %d \n", met_data_day[in_offset]);
+                            
+                        }
+                    
+                    }
                     */
                     
-                    /*printf("%d %d %d - %f %f %ld %s\n",
-                            ii, i, j, (*met_data)[out_offset],
-                            met_data_day[in_offset], out_offset, met_var);*/
+                    
+                    pixel_counter++;
                 }
                 
                 
                 
-                
-                /*
-                for (k = 0; k < c->num_land_pixels * 2; k+=2) {
-                    i = land_ij[k],
-                    j = land_ij[k+1];
-
-                    in_offset = i * c->ncols + j;
-                    out_offset = (day_cnt * c->num_land_pixels) + \
-                                 ((i - c->row_start) * c->ncols + j);
-                    (*met_data)[out_offset] = met_data_day[in_offset];
-
-                }*/
 
 
                 (*dates)[dt_cnt] = yr;
