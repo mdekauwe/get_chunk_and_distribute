@@ -8,6 +8,10 @@
 #include <stddef.h>
 #include <time.h>
 #include <math.h>
+#include <stdint.h>
+#define __STDC_FORMAT_MACROS
+#include <inttypes.h>
+
 
 #define STRING_LENGTH 2000
 #define TRUE 1
