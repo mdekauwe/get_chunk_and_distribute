@@ -201,25 +201,7 @@ int main(int argc, char **argv)
     long test_offset;
     long pixel_counter = 0;
         
-           
-    /*
-    for (k = 0; k < c->num_land_pixels * 2; k+=2) {
-        
-        printf("%d/%d\n", k, c->num_land_pixels * 2);
-        i = land_ij[k],
-        j = land_ij[k+1];
-        for (doy = 0; doy < m->tmax_ndays; doy++) {
-            if (i == 299 && j == 321) {
-                test_offset = (doy * c->num_land_pixels) + (pixel_counter);
-                printf("%f\n", m->tmax_slice[test_offset]);
-                            
-            }
-        }
-        pixel_counter++;
-    }
     
-    printf("DONE\n");
-    */
     pixel_counter=0;
     if (c->rank == c->root_processor) {
         for (k = 0; k < npairs; k+=2) {
@@ -228,8 +210,6 @@ int main(int argc, char **argv)
             j = pairs[k+1];
             for (doy = 0; doy < m->tmax_ndays; doy++) {
                 if (i == 299 && j == 321) {
-                    
-                    
                     test_offset = doy + (i * c->ncols + j);
                     printf("* %f %ld\n", m->tmax_slice[test_offset], test_offset);
                 }
@@ -247,8 +227,6 @@ int main(int argc, char **argv)
             j = pairs[k+1];
             for (doy = 0; doy < m->tmax_ndays; doy++) {
                 if (i == 299 && j == 321) {
-                     /*test_offset = (doy * c->num_land_pixels) + \
-                                 (105408);*/
                     test_offset = doy + (i * c->ncols + j);
                     printf("** %f %ld\n", m->tmax_slice[test_offset], test_offset);
                 }
@@ -561,10 +539,16 @@ void get_data(control *c, char *met_var, int total_days, float **met_data,
     long pixel_counter;
     char  infname[STRING_LENGTH];
     
+    /*
+    if ((*met_data = (float *)calloc(total_days * c->num_land_pixels,
+                      sizeof(float))) == NULL ) {
+        fprintf(stderr, "Error allocating space for met_data array\n");
+    }*/
+    
+    
     if ((*met_data = (float *)calloc(total_days * c->nrows * c->ncols,
                       sizeof(float))) == NULL ) {
         fprintf(stderr, "Error allocating space for met_data array\n");
-
     }
     
 
@@ -631,41 +615,34 @@ void get_data(control *c, char *met_var, int total_days, float **met_data,
                 fclose(fp);
 
                 index = 0;
-                pixel_counter = 0;
                 for (k = 0; k < c->num_land_pixels * 2; k+=2) {
                     i = land_ij[k],
                     j = land_ij[k+1];
 
                     in_offset = i * c->ncols + j;
                     
+                    /*out_offset = index + day_cnt; */
                     out_offset = day_cnt + (i * c->ncols + j);
+                    
                     (*met_data)[out_offset] = met_data_day[in_offset];
+                    
                     index += total_days;
                     
                     /*
                     if ((strncmp(met_var, "tmax", 3) == 0)) {
                         if (i == 299 && j == 321) {
-                            printf("%f %ld %d %d \n", met_data_day[in_offset]);
-                            
+                            printf("%f %ld %d %d \n", met_data_day[in_offset]);  
                         }
-                    
                     }
                     */
                     
-                    
-                    pixel_counter++;
                 }
                 
-                
-                
-
-
                 (*dates)[dt_cnt] = yr;
                 (*dates)[dt_cnt+1] = mth;
                 (*dates)[dt_cnt+2] = day;
                 dt_cnt +=3;
                 day_cnt++;
-
 	        }
 	    }
     }
