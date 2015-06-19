@@ -209,7 +209,7 @@ int main(int argc, char **argv)
             i = pairs[k];
             j = pairs[k+1];
             for (doy = 0; doy < m->tmax_ndays; doy++) {
-                if (i == 299 && j == 321) {
+                if ((i == 299) && (j == 321)) {
                     test_offset = doy + (i * c->ncols + j);
                     printf("* %f %ld\n", m->tmax_slice[test_offset], test_offset);
                 }
@@ -226,7 +226,7 @@ int main(int argc, char **argv)
             i = pairs[k];
             j = pairs[k+1];
             for (doy = 0; doy < m->tmax_ndays; doy++) {
-                if (i == 299 && j == 321) {
+                if ((i == 299) && (j == 321)) {
                     test_offset = doy + (i * c->ncols + j);
                     printf("** %f %ld\n", m->tmax_slice[test_offset], test_offset);
                 }
@@ -630,7 +630,7 @@ void get_data(control *c, char *met_var, int total_days, float **met_data,
                     
                     /*
                     if ((strncmp(met_var, "tmax", 3) == 0)) {
-                        if (i == 299 && j == 321) {
+                        if ((i == 299) && (j == 321)) {
                             printf("%f %ld %d %d \n", met_data_day[in_offset]);  
                         }
                     }
