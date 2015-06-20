@@ -201,46 +201,23 @@ int main(int argc, char **argv)
     long test_offset;
     long pixel_count;
     
-    /*day_cnt + (c->num_land_pixels * k)*/
-    
-    
-    if (c->rank == c->root_processor) {
-        pixel_count = 0;
-        for (k = 0; k < npairs*2; k+=2) {
+   
+    pixel_count = 0;
+    for (k = 0; k < npairs*2; k+=2) {
 
-            i = pairs[k];
-            j = pairs[k+1];
-            for (doy = 0; doy < m->tmax_ndays; doy++) {
-                if ((i == 299) && (j == 321)) {
-                    
-                    test_offset = doy * npairs + pixel_count;
-                    printf("%f\n", m->tmax_slice[test_offset]);
-                }
-            
+        i = pairs[k];
+        j = pairs[k+1];
+        for (doy = 0; doy < m->tmax_ndays; doy++) {
+            if ((i == 299) && (j == 321)) {
+                
+                test_offset = doy * npairs + pixel_count;
+                printf("%f\n", m->tmax_slice[test_offset]);
             }
-            pixel_count++;
-            
-            
-            
+        
         }
-    } else {
-        pixel_count = 0;
-        for (k = 0; k < npairs*2; k+=2) {
-
-            i = pairs[k];
-            j = pairs[k+1];
-            for (doy = 0; doy < m->tmax_ndays; doy++) {
-                if ((i == 299) && (j == 321)) {
-                    
-                    test_offset = doy * npairs + pixel_count;
-                    printf("%f\n", m->tmax_slice[test_offset]);
-                }
-            
-            }
-            pixel_count++;
-        }
-    
+        pixel_count++;
     }
+    
     
     /* Stop this process */
     mpi_err = MPI_Finalize();
