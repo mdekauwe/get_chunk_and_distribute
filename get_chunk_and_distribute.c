@@ -47,7 +47,8 @@ int main(int argc, char **argv)
     int   *pairs = NULL;
     int    mpi_err =0;
     int    npairs;
-
+    long   pixel_count;
+    
     /*MPI_Status status;*/
     FILE *land_mask_fp = NULL;
 
@@ -198,10 +199,12 @@ int main(int argc, char **argv)
 		MPI_Abort(MPI_COMM_WORLD, -1);
     }
     
-    long test_offset;
-    long pixel_count;
-    
-   
+    /* 
+        Each set of npairs is the total met data array / number of cores,
+        so we are working on a chunk here. For each chunk we will loop over
+        the i,j pair unpack each met var and write the i,j met driving file
+        for GDAY.
+    */
     pixel_count = 0;
     for (k = 0; k < npairs*2; k+=2) {
 
@@ -210,7 +213,7 @@ int main(int argc, char **argv)
         for (doy = 0; doy < m->tmax_ndays; doy++) {
             if ((i == 299) && (j == 321)) {
                 
-                test_offset = doy * npairs + pixel_count;
+                offset = doy * npairs + pixel_count;
                 printf("%f\n", m->tmax_slice[test_offset]);
             }
         
