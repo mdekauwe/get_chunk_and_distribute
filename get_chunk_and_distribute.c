@@ -347,17 +347,19 @@ void initialise_stuff(control *c) {
     c->xllcorner = 111.975;
     c->yllcorner = -44.025;
     
-    /*
+    
     c->start_yr = 1950;
     c->end_yr = 2011;
     c->start_yr_rad = 1990;
     c->end_yr_rad = 2011;
-    */
     
+    
+    /* Debug
     c->start_yr = 1950;
     c->end_yr = 1952;
     c->start_yr_rad = 1990;
     c->end_yr_rad = 2011;
+    */
     
     strcpy(c->fdir, "AWAP_data");
 
