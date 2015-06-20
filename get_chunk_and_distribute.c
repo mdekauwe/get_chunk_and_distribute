@@ -31,7 +31,7 @@
 
 int main(int argc, char **argv)
 {
-    int    i, j, k, doy, idx;
+    int    i, j, k, doy, idx, day_count;
     long   offset = 0, date_offset, offset_1, offset_2;
     float *land_mask = NULL;
     float *tmax_ij = NULL;
@@ -206,22 +206,39 @@ int main(int argc, char **argv)
         for GDAY.
     */
     
+    
+    /*
     pixel_count = 0;
     for (k = 0; k < npairs*2; k+=2) {
 
         i = pairs[k];
         j = pairs[k+1];
         
-        for (doy = 0; doy < m->tmax_ndays; doy++) {
+        for (day_count = 0; day_count < m->tmax_ndays; day_count++) {
             if ((i == 299) && (j == 321)) {
                 
-                offset = doy * npairs + pixel_count;
+                offset = day_count * npairs + pixel_count;
                 printf("%f\n", m->tmax_slice[offset]);
-            }
-            date_offset+=3;
-        
+            }        
         }
         pixel_count++;
+    }
+    */
+    
+    
+    for (day_count = 0; day_count < m->tmax_ndays; day_count++) {
+        pixel_count = 0;
+        for (k = 0; k < npairs*2; k+=2) {
+            i = pairs[k];
+            j = pairs[k+1];
+            
+            if ((i == 299) && (j == 321)) {
+                
+                offset = day_count * npairs + pixel_count;
+                printf("%f\n", m->tmax_slice[offset]);
+            }
+            pixel_count++;
+        }
     }
     
     
