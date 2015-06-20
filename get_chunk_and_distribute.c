@@ -19,11 +19,11 @@
 **              mpirun -np 8 get_chunk_and_distribute -s 300 -e 301
 **                     
 **
-** AUTHOR:      Martin De Kauwe with MPI assistance from Andrey Bliznyuk @NCI
+** AUTHOR:      Martin De Kauwe with MPI assistance from Andrey Bliznyuk@NCI
 **
 ** EMAIL:       mdekauwe@gmail.com
 **
-** DATE:        15th June, 2015
+** DATE:        20th June, 2015
 **
 */
 
@@ -31,8 +31,8 @@
 
 int main(int argc, char **argv)
 {
-    int    i, j, k, doy, idx, day_count;
-    long   offset = 0, date_offset, offset_1, offset_2;
+    int    i, j, k, idx, day_count;
+    long   offset = 0, date_offset;
     float *land_mask = NULL;
     float *tmax_ij = NULL;
     float *tmin_ij = NULL;
@@ -47,7 +47,7 @@ int main(int argc, char **argv)
     int   *pairs = NULL;
     int    mpi_err =0;
     int    npairs;
-    long   pixel_count;
+    long   num_days_offset, num_days_offset_rad;
     
     /*MPI_Status status;*/
     FILE *land_mask_fp = NULL;
@@ -200,46 +200,89 @@ int main(int argc, char **argv)
     }
     
     /* 
-        Each set of npairs is the total met data array / number of cores,
-        so we are working on a chunk here. For each chunk we will loop over
-        the i,j pair unpack each met var and write the i,j met driving file
+        Each set of npairs is the total met data array divided by the number of 
+        cores, so we are working on a chunk here. For each chunk we will loop 
+        over the i,j pair unpack each met var and write the i,j met driving file
         for GDAY.
+        
+        The unpacking logic, is reversed from the packing logic, but works fine
+        because the num_day_offset has been appropriately moved to match the
+        k loop
     */
-    
     
     /*
-    pixel_count = 0;
-    for (k = 0; k < npairs*2; k+=2) {
-
-        i = pairs[k];
-        j = pairs[k+1];
-        
-        for (day_count = 0; day_count < m->tmax_ndays; day_count++) {
-            if ((i == 299) && (j == 321)) {
-                
-                offset = day_count * npairs + pixel_count;
-                printf("%f\n", m->tmax_slice[offset]);
-            }        
-        }
-        pixel_count++;
-    }
-    */
-    
-    
     for (day_count = 0; day_count < m->tmax_ndays; day_count++) {
-        pixel_count = 0;
-        for (k = 0; k < npairs*2; k+=2) {
+        num_days_offset = 0;
+        for (k = 0; k < npairs * 2; k += 2) {
             i = pairs[k];
             j = pairs[k+1];
             
             if ((i == 299) && (j == 321)) {
                 
-                offset = day_count * npairs + pixel_count;
+                offset = day_count+ num_days_offset;
                 printf("%f\n", m->tmax_slice[offset]);
             }
-            pixel_count++;
+            num_days_offset += m->tmax_ndays;
         }
     }
+    */
+    
+    num_days_offset = 0;
+    num_days_offset_rad = 0;
+    for (k = 0; k < npairs*2; k+=2) {
+        i = pairs[k];
+        j = pairs[k+1];
+        
+        idx = 0;
+        for (day_count = 0; day_count < m->tmax_ndays; day_count++) {
+            offset = day_count + num_days_offset;
+            
+            tmax_ij[idx] = m->tmax_slice[offset];
+            tmin_ij[idx] = m->tmin_slice[offset],
+            rain_ij[idx] = m->rain_slice[offset],
+            vph09_ij[idx] = m->vph09_slice[offset],
+            vph15_ij[idx] = m->vph15_slice[offset],
+            
+            
+            /*if ((i == 299) && (j == 321)) {
+                
+                offset = day_count + num_days_offset;
+                printf("%f\n", m->tmax_slice[offset]);
+            } */
+            
+            idx++;     
+        }
+        num_days_offset += m->tmax_ndays;
+        
+        idx = 0;
+        date_offset = 0;
+        for (day_count = 0; day_count < m->rad_ndays; day_count++) {
+            offset = day_count + num_days_offset_rad;
+            
+            years_ij_rad[idx] = m->rad_dates[date_offset];
+            rad_ij[idx] = m->rad_slice[offset];
+
+            date_offset += 3;
+            idx++;
+        }
+        num_days_offset_rad += m->tmax_ndays;
+        
+        
+         /* Build a climatology from the radiation data 1990-2011 */
+        build_radiation_clim(c, m->rad_dates, rad_ij, &rad_clim_nonleap_ij,
+                             &rad_clim_leap_ij);
+
+
+        write_spinup_file(i, j, c, m, tmax_ij, tmin_ij, rain_ij, vph09_ij,
+                          vph15_ij, rad_clim_nonleap_ij, rad_clim_leap_ij);
+
+        write_forcing_file(i, j, c, m, tmax_ij, tmin_ij, rain_ij,
+                           vph09_ij, vph15_ij, rad_ij, rad_clim_nonleap_ij,
+                           rad_clim_leap_ij);
+    }
+    
+    
+    
     
     
     /* Stop this process */
@@ -531,7 +574,7 @@ void read_met_data_slice(control *c, met *m, int *land_ij) {
 void get_data(control *c, char *met_var, int total_days, float **met_data,
               int **dates, int *land_ij) {
 
-    int    day_cnt, i, j, k, dt_cnt;
+    int    day_count, i, j, k, date_count;
     long   in_offset, out_offset;
     float *met_data_day = NULL;
 
@@ -541,7 +584,7 @@ void get_data(control *c, char *met_var, int total_days, float **met_data,
     int   yr, mth, day, ndays;
     char  imth[3];
     char  iday[3];
-    long pixel_count;
+    long  num_days_offset;
     char  infname[STRING_LENGTH];
     
     
@@ -564,8 +607,8 @@ void get_data(control *c, char *met_var, int total_days, float **met_data,
         end_yr = c->end_yr;
     }
 
-    dt_cnt = 0;
-    day_cnt = 0;
+    date_count = 0;
+    day_count = 0;
     for (yr = start_yr; yr <= end_yr; yr++) {
         if (is_leap_year(yr)) {
             ndays = 366;
@@ -612,14 +655,18 @@ void get_data(control *c, char *met_var, int total_days, float **met_data,
                 }
                 fclose(fp);
 
-                pixel_count = 0;
-                for (k = 0; k < c->num_land_pixels * 2; k+=2) {
+                num_days_offset = 0;
+                for (k = 0; k < c->num_land_pixels * 2; k += 2) {
                     i = land_ij[k],
                     j = land_ij[k+1];
                     
                     in_offset = i * c->ncols + j;
-                    out_offset = day_cnt * c->num_land_pixels + pixel_count;
-                    
+                    /* 
+                        Looping over num_pixels in the internal loop so we need
+                        to jump total_days ahead for each pixel + current day
+                        count.
+                    */
+                    out_offset = day_count + num_days_offset;
                     (*met_data)[out_offset] = met_data_day[in_offset];
                     
                     /*
@@ -629,14 +676,16 @@ void get_data(control *c, char *met_var, int total_days, float **met_data,
                         }
                     }
                     */
-                    pixel_count++;
+                    
+                   
+                    num_days_offset += total_days;
                 }
                 
-                (*dates)[dt_cnt] = yr;
-                (*dates)[dt_cnt+1] = mth;
-                (*dates)[dt_cnt+2] = day;
-                dt_cnt +=3;
-                day_cnt++;
+                (*dates)[date_count] = yr;
+                (*dates)[date_count+1] = mth;
+                (*dates)[date_count+2] = day;
+                date_count += 3;
+                day_count++;
 	        }
 	    }
     }
