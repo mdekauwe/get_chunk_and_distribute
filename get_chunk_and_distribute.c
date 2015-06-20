@@ -205,18 +205,20 @@ int main(int argc, char **argv)
         the i,j pair unpack each met var and write the i,j met driving file
         for GDAY.
     */
+    
     pixel_count = 0;
     for (k = 0; k < npairs*2; k+=2) {
 
         i = pairs[k];
         j = pairs[k+1];
+        
         for (doy = 0; doy < m->tmax_ndays; doy++) {
             if ((i == 299) && (j == 321)) {
                 
                 offset = doy * npairs + pixel_count;
-                
                 printf("%f\n", m->tmax_slice[offset]);
             }
+            date_offset+=3;
         
         }
         pixel_count++;
