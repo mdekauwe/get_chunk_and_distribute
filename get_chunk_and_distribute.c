@@ -995,25 +995,17 @@ void write_spinup_file(int i, int j, control *c, met *m, float *tmax_ij,
     float J_TO_UMOL = 4.6;
     float SW_TO_PAR = 0.48;
 
+    int shuffled_yrs[] = {1964, 1962, 1970, 1989, 1968, 1985, 1973, 1977, 1972, 
+                          1969, 1987, 1983, 1984, 1982, 1962, 1971, 1968, 1962, 
+                          1965, 1990, 1960, 1977, 1969, 1966, 1968, 1965, 1982, 
+                          1985, 1980, 1966};
+    int len_shuffled_yrs = 30;
+    
+    
     /*
-    int len_shuffled_yrs = 1;
-    int shuffled_yrs[] = {1990};
-    */
-    
-    /*
-    int shuffled_yrs[] = {1968,1958,1981,1983,1999,1965,1994,2004,1995,
-                          1974,1959,2009,1964,1985,1957,1980,2010,2007,
-                          1990,1997,1973,1993,1989,1984,1955,1987,1966,
-                          1953,2003,1971,1976,1952,2008,1979,1975,1970,
-                          1963,2005,1960,1992,2000,1998,1954,1977,1962,
-                          1969,2006,1986,1950,1988};
-    int len_shuffled_yrs = 50;
-    */
-    
-    
     int len_shuffled_yrs = 3;
     int shuffled_yrs[] = {1951,1950,1952};
-    
+    */
     
     sprintf(ofname, "met_data/spinup/met_spinup_%d_%d.csv", i, j);
     ofp = fopen(ofname, "wb");
