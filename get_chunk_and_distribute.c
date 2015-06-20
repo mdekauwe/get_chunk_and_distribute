@@ -515,10 +515,10 @@ void get_data(control *c, char *met_var, int total_days, float **met_data,
     FILE *fp = NULL;
     int   start_yr, end_yr;
     int   days_in_month[] = {0,31,28,31,30,31,30,31,31,30,31,30,31};
-    int   yr, mth, day, ndays, index;
+    int   yr, mth, day, ndays;
     char  imth[3];
     char  iday[3];
-    long pixel_counter;
+    long pixel_count;
     char  infname[STRING_LENGTH];
     
     
@@ -527,9 +527,6 @@ void get_data(control *c, char *met_var, int total_days, float **met_data,
         fprintf(stderr, "Error allocating space for met_data array\n");
     }
     
-    
-    
-
     if ((met_data_day = (float *)calloc(c->nrows * c->ncols,
                          sizeof(float))) == NULL) {
          fprintf(stderr, "Error allocating space for met array\n");
@@ -592,21 +589,15 @@ void get_data(control *c, char *met_var, int total_days, float **met_data,
                 }
                 fclose(fp);
 
-                index = 0;
-                long pixel_count = 0;
+                pixel_count = 0;
                 for (k = 0; k < c->num_land_pixels * 2; k+=2) {
                     i = land_ij[k],
                     j = land_ij[k+1];
                     
-                    
                     in_offset = i * c->ncols + j;
-                    
-                    
                     out_offset = day_cnt * c->num_land_pixels + pixel_count;
                     
                     (*met_data)[out_offset] = met_data_day[in_offset];
-                    
-                    
                     
                     /*
                     if ((strncmp(met_var, "tmax", 3) == 0)) {
@@ -616,8 +607,6 @@ void get_data(control *c, char *met_var, int total_days, float **met_data,
                     }
                     */
                     pixel_count++;
-                    index += total_days;
-                    
                 }
                 
                 (*dates)[dt_cnt] = yr;
