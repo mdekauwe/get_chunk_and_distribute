@@ -206,15 +206,14 @@ int main(int argc, char **argv)
     
     if (c->rank == c->root_processor) {
         pixel_count = 0;
-        for (k = 0; k < npairs; k+=2) {
+        for (k = 0; k < npairs*2; k+=2) {
 
             i = pairs[k];
             j = pairs[k+1];
             for (doy = 0; doy < m->tmax_ndays; doy++) {
                 if ((i == 299) && (j == 321)) {
                     
-                    test_offset = doy * (npairs) + pixel_count;
-                    
+                    test_offset = doy * npairs + pixel_count;
                     printf("%f\n", m->tmax_slice[test_offset]);
                 }
             
@@ -226,14 +225,14 @@ int main(int argc, char **argv)
         }
     } else {
         pixel_count = 0;
-        for (k = 0; k < npairs; k+=2) {
+        for (k = 0; k < npairs*2; k+=2) {
 
             i = pairs[k];
             j = pairs[k+1];
             for (doy = 0; doy < m->tmax_ndays; doy++) {
                 if ((i == 299) && (j == 321)) {
-                    test_offset = doy * (npairs) + pixel_count;
                     
+                    test_offset = doy * npairs + pixel_count;
                     printf("%f\n", m->tmax_slice[test_offset]);
                 }
             
@@ -242,7 +241,6 @@ int main(int argc, char **argv)
         }
     
     }
-    
     
     /* Stop this process */
     mpi_err = MPI_Finalize();
