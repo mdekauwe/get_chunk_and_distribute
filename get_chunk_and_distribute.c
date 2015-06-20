@@ -32,7 +32,7 @@
 int main(int argc, char **argv)
 {
     int    i, j, k, doy, idx;
-    uint64_t   offset = 0, date_offset, offset_1, offset_2;
+    long   offset = 0, date_offset, offset_1, offset_2;
     float *land_mask = NULL;
     float *tmax_ij = NULL;
     float *tmin_ij = NULL;
@@ -198,7 +198,10 @@ int main(int argc, char **argv)
 		MPI_Abort(MPI_COMM_WORLD, -1);
     }
     
-    uint64_t test_offset;
+    long test_offset;
+    
+    
+    /*day_cnt + (c->num_land_pixels * k)*/
     
     
     if (c->rank == c->root_processor) {
@@ -208,9 +211,9 @@ int main(int argc, char **argv)
             j = pairs[k+1];
             for (doy = 0; doy < m->tmax_ndays; doy++) {
                 if ((i == 299) && (j == 321)) {
-                    test_offset = ((uint64_t)doy * (uint64_t)c->nrows * 
-                                   (uint64_t)c->ncols) + ((uint64_t)i * 
-                                   (uint64_t)c->ncols + (uint64_t)j);
+                    
+                    test_offset = doy * npairs + 287;
+                    
                     printf("%f\n", m->tmax_slice[test_offset]);
                 }
             
@@ -226,9 +229,8 @@ int main(int argc, char **argv)
             j = pairs[k+1];
             for (doy = 0; doy < m->tmax_ndays; doy++) {
                 if ((i == 299) && (j == 321)) {
-                    test_offset = ((uint64_t)doy * (uint64_t)c->nrows * 
-                                   (uint64_t)c->ncols) + ((uint64_t)i * 
-                                   (uint64_t)c->ncols + (uint64_t)j);
+                    test_offset = doy * npairs + 287;
+                    
                     printf("%f\n", m->tmax_slice[test_offset]);
                 }
             
@@ -321,7 +323,7 @@ void initialise_stuff(control *c) {
 void mask_ij(control *c, float *land_mask, int *land_ij) {
 
     int  i, j;
-    uint64_t out_offset = 0, in_offset = 0;
+    long out_offset = 0, in_offset = 0;
 
     for (i = 0; i < c->nrows_in_slice; i++) {
 	    for (j = 0; j < c->ncols; j++) {
@@ -528,7 +530,7 @@ void get_data(control *c, char *met_var, int total_days, float **met_data,
               int **dates, int *land_ij) {
 
     int    day_cnt, i, j, k, dt_cnt;
-    uint64_t   in_offset, out_offset;
+    long   in_offset, out_offset;
     float *met_data_day = NULL;
 
     FILE *fp = NULL;
@@ -540,17 +542,13 @@ void get_data(control *c, char *met_var, int total_days, float **met_data,
     long pixel_counter;
     char  infname[STRING_LENGTH];
     
-    /*
+    
     if ((*met_data = (float *)calloc(total_days * c->num_land_pixels,
                       sizeof(float))) == NULL ) {
         fprintf(stderr, "Error allocating space for met_data array\n");
-    }*/
-    
-    if ((*met_data = (float *)calloc((uint64_t)total_days * (uint64_t)c->nrows *
-                                     (uint64_t)c->ncols,
-                      sizeof(float))) == NULL ) {
-        fprintf(stderr, "Error allocating space for met_data array\n");
     }
+    
+    
     
 
     if ((met_data_day = (float *)calloc(c->nrows * c->ncols,
@@ -616,6 +614,7 @@ void get_data(control *c, char *met_var, int total_days, float **met_data,
                 fclose(fp);
 
                 index = 0;
+                long pixel_count = 0;
                 for (k = 0; k < c->num_land_pixels * 2; k+=2) {
                     i = land_ij[k],
                     j = land_ij[k+1];
@@ -623,21 +622,22 @@ void get_data(control *c, char *met_var, int total_days, float **met_data,
                     
                     in_offset = i * c->ncols + j;
                     
-                    out_offset = ((uint64_t)day_cnt * (uint64_t)c->ncols * 
-                                  (uint64_t)c->nrows) + ((uint64_t)i * 
-                                  (uint64_t)c->ncols + (uint64_t)j);
-                   
+                    
+                    out_offset = day_cnt * c->num_land_pixels + pixel_count;
+                    
                     (*met_data)[out_offset] = met_data_day[in_offset];
                     
-                    index += total_days;
+                    
                     
                     /*
                     if ((strncmp(met_var, "tmax", 3) == 0)) {
                         if ((i == 299) && (j == 321)) {
-                            printf("%f %ld %d %d \n", met_data_day[in_offset]);  
+                            printf("%f %ld\n", met_data_day[in_offset], pixel_count);  
                         }
                     }
                     */
+                    pixel_count++;
+                    index += total_days;
                     
                 }
                 
@@ -664,7 +664,7 @@ int  distribute(control *c, int *land_ij, float *met_data, float **my_data,
 
     int     ii, k, mpi_err;
     int     rest = 0, index;
-    uint64_t     size_to_send = 0, size_my_data;
+    long     size_to_send = 0, size_my_data;
     MPI_Status status;
 
     /* Enough space to fit all data on a process*/
@@ -802,7 +802,7 @@ void build_radiation_clim(control *c, int *rad_dates, float *rad,
        forcing, so we need to build a climatology to effectively gap fill for
        the spin up files
     */
-    uint64_t  date_offset, date_offset2;
+    long  date_offset, date_offset2;
     int   doy, yr, year, month, day, ndays;
     int   jan_ndays = 0, feb_ndays = 0, mar_ndays = 0, apr_ndays = 0;
     int   may_ndays = 0, jun_ndays = 0, jul_ndays = 0, aug_ndays = 0;
@@ -940,7 +940,7 @@ void write_spinup_file(int i, int j, control *c, met *m, float *tmax_ij,
     time_t current_time;
     char*  c_time_string;
     FILE  *ofp;
-    uint64_t  date_offset;
+    long  date_offset;
     int   doy_cnt;
     int   k=0, kk, yr_to_get, st_idx, en_idx, ndays, year;
     float co2=0.0, ndep=0.0, wind_sp=0.0, atpress=0.0, wind_am=0.0;
@@ -1091,7 +1091,7 @@ void write_forcing_file(int i, int j, control *c, met *m, float *tmax_ij,
     char*  c_time_string;
     FILE *ofp;
     
-    uint64_t date_offset;
+    long date_offset;
     int k=0, kk, jj, yr_to_get, st_idx, en_idx, ndays, doy_cnt, year,st_idx_rad;
     float co2=0.0, ndep=0.0, wind_sp=0.0, atpress=0.0, wind_am=0.0;
     float wind_pm=0.0, vpd_avg=0.0, par_day=0.0, sw_am=0.0;
