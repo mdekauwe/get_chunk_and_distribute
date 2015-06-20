@@ -214,7 +214,8 @@ int main(int argc, char **argv)
             if ((i == 299) && (j == 321)) {
                 
                 offset = doy * npairs + pixel_count;
-                printf("%f %d\n", m->tmax_slice[offset], pixel_count);
+                
+                printf("%f\n", m->tmax_slice[offset]);
             }
         
         }
