@@ -39,7 +39,6 @@ typedef struct  {
     int    nsize;
     int    rest;
     float  land_id;
-    int    debug;
     float  cellsize;
     float  xllcorner;
     float  yllcorner;

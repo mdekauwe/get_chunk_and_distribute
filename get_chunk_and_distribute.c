@@ -47,7 +47,7 @@ int main(int argc, char **argv)
     int   *pairs = NULL;
     int    mpi_err =0;
     int    npairs;
-    long   num_days_offset, num_days_offset_rad;
+    long   pixel_count;
     
     /*MPI_Status status;*/
     FILE *land_mask_fp = NULL;
@@ -68,16 +68,6 @@ int main(int argc, char **argv)
 
     initialise_stuff(c);
     clparser(argc, argv, c);
-
-
-    if (c->debug) {
-        c->start_yr = 1990;
-        c->end_yr = 1990;
-        c->start_yr_rad = 1990;
-        c->end_yr_rad = 1990;
-        strcpy(c->fdir, "test_files");
-    }
-
 
     if ((c->row_start == -999) || (c->row_end == -999)) {
         fprintf(stderr,"You need to set row start/end on command line\n");
@@ -141,10 +131,11 @@ int main(int argc, char **argv)
 
     c->nsize = c->num_land_pixels / c->size;
     c->rest = c->num_land_pixels - (c->nsize * c->size);
+    
     read_met_data_slice(c, m, land_ij);
 
-
     npairs = distribute_ij(c, land_ij, &pairs);
+    
     if (npairs < 0) {
         fprintf(stderr,"Error in distribute_ij\n");
 		MPI_Abort(MPI_COMM_WORLD, mpi_err);
@@ -180,7 +171,7 @@ int main(int argc, char **argv)
         fprintf(stderr,"Error allocating space for rad_ij array\n");
 		MPI_Abort(MPI_COMM_WORLD, -1);
     }
-
+    
     if ((years_ij_rad = (int *)calloc(m->rad_ndays,
                         sizeof(int))) == NULL) {
         fprintf(stderr,"Error allocating space for years_ij_rad array\n");
@@ -210,32 +201,20 @@ int main(int argc, char **argv)
         k loop
     */
     
-    /*
-    for (day_count = 0; day_count < m->tmax_ndays; day_count++) {
-        num_days_offset = 0;
-        for (k = 0; k < npairs * 2; k += 2) {
-            i = pairs[k];
-            j = pairs[k+1];
-            
-            if ((i == 299) && (j == 321)) {
-                
-                offset = day_count+ num_days_offset;
-                printf("%f\n", m->tmax_slice[offset]);
-            }
-            num_days_offset += m->tmax_ndays;
-        }
-    }
-    */
+   
     
-    num_days_offset = 0;
-    num_days_offset_rad = 0;
+    
+    pixel_count = 0;
     for (k = 0; k < npairs*2; k+=2) {
         i = pairs[k];
         j = pairs[k+1];
         
+        
+        /*
         idx = 0;
         for (day_count = 0; day_count < m->tmax_ndays; day_count++) {
             offset = day_count + num_days_offset;
+            offset = pixel_count * m->tmax_ndays + day_count;
             
             tmax_ij[idx] = m->tmax_slice[offset];
             tmin_ij[idx] = m->tmin_slice[offset],
@@ -244,44 +223,44 @@ int main(int argc, char **argv)
             vph15_ij[idx] = m->vph15_slice[offset],
             
             
-            /*if ((i == 299) && (j == 321)) {
+            if ((i == 299) && (j == 321)) {
                 
                 offset = day_count + num_days_offset;
                 printf("%f\n", m->tmax_slice[offset]);
-            } */
+            } 
+            
             
             idx++;     
         }
-        num_days_offset += m->tmax_ndays;
         
+        */
+        
+        /*size_my_data = ndays * (c->nsize+1);*/
+       
         idx = 0;
         date_offset = 0;
         for (day_count = 0; day_count < m->rad_ndays; day_count++) {
-            offset = day_count + num_days_offset_rad;
+            /*offset = day_count + num_days_offset_rad;*/
             
-            years_ij_rad[idx] = m->rad_dates[date_offset];
-            rad_ij[idx] = m->rad_slice[offset];
-
+            /*size_my_data = ndays * (c->nsize+1); */
+            offset = pixel_count * m->rad_ndays + day_count;
+            
+            printf("%ld %d %d\n", offset, m->rad_size, npairs);
+            printf("%ld %f\n\n", offset, m->rad_slice[offset]);
+            
+            /*years_ij_rad[idx] = m->rad_dates[date_offset];*/
+            /*rad_ij[idx] = m->rad_slice[offset];*/
+            
+            
             date_offset += 3;
             idx++;
         }
-        num_days_offset_rad += m->rad_ndays;
+        pixel_count++;
         
         
-         /* Build a climatology from the radiation data 1990-2011 */
-        build_radiation_clim(c, m->rad_dates, rad_ij, &rad_clim_nonleap_ij,
-                             &rad_clim_leap_ij);
-
-
-        write_spinup_file(i, j, c, m, tmax_ij, tmin_ij, rain_ij, vph09_ij,
-                          vph15_ij, rad_clim_nonleap_ij, rad_clim_leap_ij);
-
-        write_forcing_file(i, j, c, m, tmax_ij, tmin_ij, rain_ij,
-                           vph09_ij, vph15_ij, rad_ij, rad_clim_nonleap_ij,
-                           rad_clim_leap_ij);
     }
     
-    
+    printf("DONE\n");
     
     
     
@@ -319,8 +298,6 @@ void clparser(int argc, char **argv, control *c) {
 			} else if (!strncasecmp(argv[i], "-e", 2)) {
 			    c->row_end = atoi(argv[++i]);
 			    c->row_end--; /* correct for 0 index */
-			} else if (!strncasecmp(argv[i], "-d", 2)) {
-			    c->debug = TRUE;
 			} else {
                 fprintf(stderr,"%s: unknown argument on command line: %s\n",
                         argv[0], argv[i]);
@@ -342,26 +319,26 @@ void initialise_stuff(control *c) {
     c->land_id = 0.5; /* Anything > 0.000001 */
     c->nsize = -999;
     c->rest = -999;
-    c->debug = FALSE;
     c->cellsize = 0.05;
     c->xllcorner = 111.975;
     c->yllcorner = -44.025;
     
     
+    /*
     c->start_yr = 1960;
     c->end_yr = 2011;
     c->start_yr_forcing = 1990;
     c->end_yr_forcing = 2011;
     c->start_yr_rad = 1990;
     c->end_yr_rad = 2011;
+    */
     
     
-    /* Debug
     c->start_yr = 1950;
     c->end_yr = 1952;
     c->start_yr_rad = 1990;
     c->end_yr_rad = 2011;
-    */
+    
     
     strcpy(c->fdir, "AWAP_data");
 
@@ -566,8 +543,8 @@ void read_met_data_slice(control *c, met *m, int *land_ij) {
 		MPI_Abort(MPI_COMM_WORLD, -1);
     }
     m->rad_size = distribute(c, land_ij, met_data, &m->rad_slice, tag6,
-                              m->rad_ndays);
-    
+                             m->rad_ndays);
+    printf("%d\n", m->rad_size);
     free(met_data);
     met_data = NULL;
     
@@ -674,9 +651,9 @@ void get_data(control *c, char *met_var, int total_days, float **met_data,
                     (*met_data)[out_offset] = met_data_day[in_offset];
                     
                     /*
-                    if ((strncmp(met_var, "tmax", 3) == 0)) {
+                    if ((strncmp(met_var, "rad", 3) == 0)) {
                         if ((i == 299) && (j == 321)) {
-                            printf("%f %ld\n", met_data_day[in_offset], pixel_count);  
+                            printf("%f\n", met_data_day[in_offset]);  
                         }
                     }
                     */
@@ -684,6 +661,7 @@ void get_data(control *c, char *met_var, int total_days, float **met_data,
                    
                     num_days_offset += total_days;
                 }
+                
                 
                 (*dates)[date_count] = yr;
                 (*dates)[date_count+1] = mth;
@@ -712,8 +690,9 @@ int  distribute(control *c, int *land_ij, float *met_data, float **my_data,
     MPI_Status status;
 
     /* Enough space to fit all data on a process*/
-    size_my_data = ndays * (c->nsize+1);
-
+    size_my_data = ndays * (c->nsize + 1);
+    
+    printf("%ld %d %d *** %d\n", size_my_data, ndays, c->nsize+1, 779395);
     if ((*my_data = (float *)calloc(size_my_data, sizeof(float))) == NULL ) {
         fprintf(stderr, "Error allocating space for pairs array\n");
         MPI_Abort(MPI_COMM_WORLD, -1);
@@ -723,8 +702,7 @@ int  distribute(control *c, int *land_ij, float *met_data, float **my_data,
 
         /* Divide up the chunks between our available processors */
         if (c->rest > 0) {
-            for (k = 0; k < (c->nsize+1) * ndays; k++) {
-                /*(*my_data)[k] = slice[k];*/
+            for (k = 0; k < (c->nsize + 1) * ndays; k++) {
                 (*my_data)[k] = met_data[k];
             }
             index = (c->nsize + 1) * ndays;
@@ -737,7 +715,7 @@ int  distribute(control *c, int *land_ij, float *met_data, float **my_data,
             rest = c->rest - 1;
         }
 
-        size_to_send = ndays * (c->nsize+1);
+        size_to_send = ndays * (c->nsize + 1);
         for (ii = 0; ii < rest; ii++) {
             mpi_err = MPI_Send(&(met_data[index]), size_to_send, MPI_FLOAT, ii+1,
                               tag, MPI_COMM_WORLD);
@@ -784,7 +762,6 @@ int distribute_ij(control *c, int *land_ij, int **pairs) {
     int *position = NULL; /* displacement index for various processors */
     int *send_count = NULL; /* number of elements sent to each processor */
     int  pairs_size = 2 * (c->nsize + 1);
-
     if ((*pairs = (int *)calloc(pairs_size, sizeof(int))) == NULL) {
         fprintf(stderr,"Error allocating space for pairs array\n");
         MPI_Abort(MPI_COMM_WORLD, -1);
@@ -805,7 +782,7 @@ int distribute_ij(control *c, int *land_ij, int **pairs) {
         for(i = 0; i < c->rest; i++) {
             send_count[i] = 2 * (c->nsize + 1);
             position[i] = index;
-            index += 2 * (c->nsize+1);
+            index += 2 * (c->nsize + 1);
         }
 
         for (i = c->rest; i < c->size; i++) {
@@ -832,9 +809,9 @@ int distribute_ij(control *c, int *land_ij, int **pairs) {
         return -1;
     } else {
         if(c->rank < c->rest) {
-            return 2*(c->nsize+1);
+            return 2 * (c->nsize + 1);
         } else {
-            return 2*c->nsize;
+            return 2 * c->nsize;
         }
     }
 }
@@ -996,18 +973,19 @@ void write_spinup_file(int i, int j, control *c, met *m, float *tmax_ij,
     float MJ_TO_J = 1.0 / 1.0E-6;
     float J_TO_UMOL = 4.6;
     float SW_TO_PAR = 0.48;
-
+    
+    /*
     int shuffled_yrs[] = {1964, 1962, 1970, 1989, 1968, 1985, 1973, 1977, 1972, 
                           1969, 1987, 1983, 1984, 1982, 1962, 1971, 1968, 1962, 
                           1965, 1990, 1960, 1977, 1969, 1966, 1968, 1965, 1982, 
                           1985, 1980, 1966};
     int len_shuffled_yrs = 30;
+    */
     
     
-    /*
     int len_shuffled_yrs = 3;
     int shuffled_yrs[] = {1951,1950,1952};
-    */
+    
     
     sprintf(ofname, "met_data/spinup/met_spinup_%d_%d.csv", i, j);
     ofp = fopen(ofname, "wb");
