@@ -348,7 +348,7 @@ void initialise_stuff(control *c) {
     c->yllcorner = -44.025;
     
     
-    c->start_yr = 1950;
+    c->start_yr = 1960;
     c->end_yr = 2011;
     c->start_yr_rad = 1990;
     c->end_yr_rad = 2011;
