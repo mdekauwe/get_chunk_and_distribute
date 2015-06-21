@@ -276,9 +276,10 @@ int main(int argc, char **argv)
         write_spinup_file(i, j, c, m, tmax_ij, tmin_ij, rain_ij, vph09_ij,
                           vph15_ij, rad_clim_nonleap_ij, rad_clim_leap_ij);
 
-        write_forcing_file(i, j, c, m, tmax_ij, tmin_ij, rain_ij,
+        /*write_forcing_file(i, j, c, m, tmax_ij, tmin_ij, rain_ij,
                            vph09_ij, vph15_ij, rad_ij, rad_clim_nonleap_ij,
                            rad_clim_leap_ij);
+        */
     }
     
     
@@ -350,6 +351,8 @@ void initialise_stuff(control *c) {
     
     c->start_yr = 1960;
     c->end_yr = 2011;
+    c->start_yr_forcing = 1990;
+    c->end_yr_forcing = 2011;
     c->start_yr_rad = 1990;
     c->end_yr_rad = 2011;
     
@@ -1166,7 +1169,7 @@ void write_forcing_file(int i, int j, control *c, met *m, float *tmax_ij,
     wind_pm = wind_sp;
 
 
-    for (k = c->start_yr; k <= c->end_yr; k++) {
+    for (k = c->start_yr_forcing; k <= c->end_yr_forcing; k++) {
         yr_to_get = k;
 
         st_idx = -999;

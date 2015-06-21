@@ -42,6 +42,8 @@ typedef struct  {
     float  yllcorner;
     int    start_yr;
     int    end_yr;
+    int    start_yr_forcing;
+    int    end_yr_forcing;
     int    start_yr_rad;
     int    end_yr_rad;
     char   fdir[STRING_LENGTH];
