@@ -265,7 +265,7 @@ int main(int argc, char **argv)
             date_offset += 3;
             idx++;
         }
-        num_days_offset_rad += m->tmax_ndays;
+        num_days_offset_rad += m->rad_ndays;
         
         
          /* Build a climatology from the radiation data 1990-2011 */
@@ -276,10 +276,9 @@ int main(int argc, char **argv)
         write_spinup_file(i, j, c, m, tmax_ij, tmin_ij, rain_ij, vph09_ij,
                           vph15_ij, rad_clim_nonleap_ij, rad_clim_leap_ij);
 
-        /*write_forcing_file(i, j, c, m, tmax_ij, tmin_ij, rain_ij,
+        write_forcing_file(i, j, c, m, tmax_ij, tmin_ij, rain_ij,
                            vph09_ij, vph15_ij, rad_ij, rad_clim_nonleap_ij,
                            rad_clim_leap_ij);
-        */
     }
     
     
