@@ -37,7 +37,7 @@ typedef struct  {
     int    rank;
     int    size;
     int    nsize;
-    int    rest;
+    int    remainder;
     float  land_id;
     float  cellsize;
     float  xllcorner;

@@ -130,7 +130,9 @@ int main(int argc, char **argv)
     }
 
     c->nsize = c->num_land_pixels / c->size;
-    c->rest = c->num_land_pixels - (c->nsize * c->size);
+    
+    /* elements remaining after division among processes */
+    c->remainder = c->num_land_pixels - (c->nsize * c->size);
     
     read_met_data_slice(c, m, land_ij);
 
@@ -201,72 +203,69 @@ int main(int argc, char **argv)
         k loop
     */
     
-   
-    
-    
     pixel_count = 0;
-    for (k = 0; k < npairs*2; k+=2) {
+    for (k = 0; k < npairs; k+=2) {
         i = pairs[k];
         j = pairs[k+1];
         
-        
-        /*
         idx = 0;
         for (day_count = 0; day_count < m->tmax_ndays; day_count++) {
-            offset = day_count + num_days_offset;
+            /*offset = day_count + num_days_offset;*/
             offset = pixel_count * m->tmax_ndays + day_count;
             
             tmax_ij[idx] = m->tmax_slice[offset];
-            tmin_ij[idx] = m->tmin_slice[offset],
-            rain_ij[idx] = m->rain_slice[offset],
-            vph09_ij[idx] = m->vph09_slice[offset],
-            vph15_ij[idx] = m->vph15_slice[offset],
+            tmin_ij[idx] = m->tmin_slice[offset];
+            rain_ij[idx] = m->rain_slice[offset];
+            vph09_ij[idx] = m->vph09_slice[offset];
+            vph15_ij[idx] = m->vph15_slice[offset];
             
-            
+            /*
             if ((i == 299) && (j == 321)) {
-                
-                offset = day_count + num_days_offset;
                 printf("%f\n", m->tmax_slice[offset]);
             } 
-            
-            
+            */
             idx++;     
         }
         
-        */
-        
-        /*size_my_data = ndays * (c->nsize+1);*/
-       
         idx = 0;
         date_offset = 0;
         for (day_count = 0; day_count < m->rad_ndays; day_count++) {
             /*offset = day_count + num_days_offset_rad;*/
-            
-            /*size_my_data = ndays * (c->nsize+1); */
             offset = pixel_count * m->rad_ndays + day_count;
             
-            printf("%ld %d %d\n", offset, m->rad_size, npairs);
-            printf("%ld %f\n\n", offset, m->rad_slice[offset]);
+            years_ij_rad[idx] = m->rad_dates[date_offset];
+            rad_ij[idx] = m->rad_slice[offset];
             
-            /*years_ij_rad[idx] = m->rad_dates[date_offset];*/
-            /*rad_ij[idx] = m->rad_slice[offset];*/
-            
-            
+            /*
+            if ((i == 299) && (j == 321)) {
+                printf("%f\n", m->rad_slice[offset]);
+            }
+            */
             date_offset += 3;
             idx++;
         }
         pixel_count++;
         
-        
+        /* Build a climatology from the radiation data 1990-2011 */
+        build_radiation_clim(c, m->rad_dates, rad_ij, &rad_clim_nonleap_ij,
+                             &rad_clim_leap_ij);
+
+
+        write_spinup_file(i, j, c, m, tmax_ij, tmin_ij, rain_ij, vph09_ij,
+                          vph15_ij, rad_clim_nonleap_ij, rad_clim_leap_ij);
+
+        write_forcing_file(i, j, c, m, tmax_ij, tmin_ij, rain_ij,
+                           vph09_ij, vph15_ij, rad_ij, rad_clim_nonleap_ij,
+                           rad_clim_leap_ij);
     }
-    
-    printf("DONE\n");
-    
     
     
     /* Stop this process */
     mpi_err = MPI_Finalize();
-
+    if (mpi_err != MPI_SUCCESS) {
+        fprintf(stderr, "Error shutting down MPI processes");
+        MPI_Abort(MPI_COMM_WORLD, mpi_err);
+    }
     
     free(c);
     free(m);
@@ -318,27 +317,29 @@ void initialise_stuff(control *c) {
 	c->row_start = -999;
     c->land_id = 0.5; /* Anything > 0.000001 */
     c->nsize = -999;
-    c->rest = -999;
+    c->remainder = -999;
     c->cellsize = 0.05;
     c->xllcorner = 111.975;
     c->yllcorner = -44.025;
     
     
-    /*
+    
     c->start_yr = 1960;
     c->end_yr = 2011;
     c->start_yr_forcing = 1990;
     c->end_yr_forcing = 2011;
     c->start_yr_rad = 1990;
     c->end_yr_rad = 2011;
-    */
     
     
+    /*
     c->start_yr = 1950;
     c->end_yr = 1952;
     c->start_yr_rad = 1990;
     c->end_yr_rad = 2011;
-    
+    c->start_yr_forcing = 1990;
+    c->end_yr_forcing = 2011;
+    */
     
     strcpy(c->fdir, "AWAP_data");
 
@@ -544,7 +545,6 @@ void read_met_data_slice(control *c, met *m, int *land_ij) {
     }
     m->rad_size = distribute(c, land_ij, met_data, &m->rad_slice, tag6,
                              m->rad_ndays);
-    printf("%d\n", m->rad_size);
     free(met_data);
     met_data = NULL;
     
@@ -556,13 +556,13 @@ void get_data(control *c, char *met_var, int total_days, float **met_data,
               int **dates, int *land_ij) {
 
     int    day_count, i, j, k, date_count;
-    long   in_offset, out_offset;
+    long   in_offset, out_offset, out_offset2;
     float *met_data_day = NULL;
 
     FILE *fp = NULL;
     int   start_yr, end_yr;
     int   days_in_month[] = {0,31,28,31,30,31,30,31,31,30,31,30,31};
-    int   yr, mth, day, ndays;
+    int   yr, mth, day, ndays, pixel_count;
     char  imth[3];
     char  iday[3];
     long  num_days_offset;
@@ -637,6 +637,7 @@ void get_data(control *c, char *met_var, int total_days, float **met_data,
                 fclose(fp);
 
                 num_days_offset = 0;
+                pixel_count = 0;
                 for (k = 0; k < c->num_land_pixels * 2; k += 2) {
                     i = land_ij[k],
                     j = land_ij[k+1];
@@ -648,17 +649,21 @@ void get_data(control *c, char *met_var, int total_days, float **met_data,
                         count.
                     */
                     out_offset = day_count + num_days_offset;
+                    out_offset2 = day_count * c->num_land_pixels + pixel_count;
+                    
+                    
                     (*met_data)[out_offset] = met_data_day[in_offset];
                     
                     /*
-                    if ((strncmp(met_var, "rad", 3) == 0)) {
+                    if ((strncmp(met_var, "tmax", 4) == 0)) {
                         if ((i == 299) && (j == 321)) {
                             printf("%f\n", met_data_day[in_offset]);  
                         }
                     }
                     */
                     
-                   
+                    
+                    pixel_count++;
                     num_days_offset += total_days;
                 }
                 
@@ -685,14 +690,13 @@ int  distribute(control *c, int *land_ij, float *met_data, float **my_data,
                int tag, int ndays) {
 
     int     ii, k, mpi_err;
-    int     rest = 0, index;
+    int     remainder = 0, index;
     long     size_to_send = 0, size_my_data;
     MPI_Status status;
 
     /* Enough space to fit all data on a process*/
     size_my_data = ndays * (c->nsize + 1);
     
-    printf("%ld %d %d *** %d\n", size_my_data, ndays, c->nsize+1, 779395);
     if ((*my_data = (float *)calloc(size_my_data, sizeof(float))) == NULL ) {
         fprintf(stderr, "Error allocating space for pairs array\n");
         MPI_Abort(MPI_COMM_WORLD, -1);
@@ -701,22 +705,22 @@ int  distribute(control *c, int *land_ij, float *met_data, float **my_data,
     if (c->rank == c->root_processor) {
 
         /* Divide up the chunks between our available processors */
-        if (c->rest > 0) {
+        if (c->remainder > 0) {
             for (k = 0; k < (c->nsize + 1) * ndays; k++) {
                 (*my_data)[k] = met_data[k];
             }
             index = (c->nsize + 1) * ndays;
-            rest = c->rest - 1;
+            remainder = c->remainder - 1;
         } else {
             for (k = 0; k < c->nsize * ndays; k++) {
                 (*my_data)[k] = met_data[k];
             }
             index = c->nsize * ndays;
-            rest = c->rest - 1;
+            remainder = c->remainder - 1;
         }
 
         size_to_send = ndays * (c->nsize + 1);
-        for (ii = 0; ii < rest; ii++) {
+        for (ii = 0; ii < remainder; ii++) {
             mpi_err = MPI_Send(&(met_data[index]), size_to_send, MPI_FLOAT, ii+1,
                               tag, MPI_COMM_WORLD);
             if (mpi_err != MPI_SUCCESS) {
@@ -727,7 +731,7 @@ int  distribute(control *c, int *land_ij, float *met_data, float **my_data,
         }
 
         size_to_send = ndays * c->nsize;
-        for (ii = rest; ii < c->size-1; ii++) {
+        for (ii = remainder; ii < c->size-1; ii++) {
            mpi_err = MPI_Send(&(met_data[index]), size_to_send, MPI_FLOAT, ii+1,
                               tag, MPI_COMM_WORLD);
 
@@ -746,7 +750,7 @@ int  distribute(control *c, int *land_ij, float *met_data, float **my_data,
         }
     }
 
-    if (c->rank < c->rest )
+    if (c->rank < c->remainder )
        return size_my_data;
     else
        return size_my_data - ndays;
@@ -757,43 +761,50 @@ int  distribute(control *c, int *land_ij, float *met_data, float **my_data,
 
 
 int distribute_ij(control *c, int *land_ij, int **pairs) {
-
+    /*
+        Divide the total number of land pixels between the various processors.
+        
+        Return the number of pairs (i,j). Note the number of pairs is double 
+        the number of c->num_land_pixels / num processors, because we are 
+        dividing up land_ij which for contains both the i + j pair.
+    */
     int  i, mpi_err, index;
-    int *position = NULL; /* displacement index for various processors */
+    int *position = NULL;   /* displacement index for various processors */
     int *send_count = NULL; /* number of elements sent to each processor */
     int  pairs_size = 2 * (c->nsize + 1);
+    
     if ((*pairs = (int *)calloc(pairs_size, sizeof(int))) == NULL) {
-        fprintf(stderr,"Error allocating space for pairs array\n");
+        fprintf(stderr, "Error allocating space for pairs array\n");
         MPI_Abort(MPI_COMM_WORLD, -1);
     }
 
     if (c->rank == c->root_processor) {
         if ((send_count = (int *)calloc(c->size, sizeof(int))) == NULL) {
-	        fprintf(stderr,"Error allocating space for send_count array\n");
+	        fprintf(stderr, "Error allocating space for send_count array\n");
 		    MPI_Abort(MPI_COMM_WORLD, -1);
         }
 
         if ((position = (int *)calloc(c->size, sizeof(int))) == NULL) {
-	        fprintf(stderr,"Error allocating space for position array\n");
+	        fprintf(stderr, "Error allocating space for position array\n");
 		    MPI_Abort(MPI_COMM_WORLD, -1);
         }
-
+        
+        /* Calculate send counts & displacements */
         index = 0;
-        for(i = 0; i < c->rest; i++) {
+        for(i = 0; i < c->remainder; i++) {
             send_count[i] = 2 * (c->nsize + 1);
             position[i] = index;
             index += 2 * (c->nsize + 1);
         }
-
-        for (i = c->rest; i < c->size; i++) {
+         
+        for (i = c->remainder; i < c->size; i++) {
             send_count[i] = 2 * c->nsize;
             position[i] = index;
             index += 2 * c->nsize;
         }
-
     }
 
-    /* divide the data among processes */
+    /* divide the data among processors  */
     mpi_err = MPI_Scatterv(land_ij, send_count, position, MPI_INT, (*pairs),
                            pairs_size, MPI_INT, c->root_processor,
                            MPI_COMM_WORLD);
@@ -808,10 +819,10 @@ int distribute_ij(control *c, int *land_ij, int **pairs) {
     if (mpi_err) {
         return -1;
     } else {
-        if(c->rank < c->rest) {
-            return 2 * (c->nsize + 1);
+        if(c->rank < c->remainder) {
+            return 2 * (c->nsize + 1);  /* number of pairs */
         } else {
-            return 2 * c->nsize;
+            return 2 * c->nsize;        /* number of pairs */
         }
     }
 }
@@ -974,18 +985,18 @@ void write_spinup_file(int i, int j, control *c, met *m, float *tmax_ij,
     float J_TO_UMOL = 4.6;
     float SW_TO_PAR = 0.48;
     
-    /*
+    
     int shuffled_yrs[] = {1964, 1962, 1970, 1989, 1968, 1985, 1973, 1977, 1972, 
                           1969, 1987, 1983, 1984, 1982, 1962, 1971, 1968, 1962, 
                           1965, 1990, 1960, 1977, 1969, 1966, 1968, 1965, 1982, 
                           1985, 1980, 1966};
     int len_shuffled_yrs = 30;
-    */
     
     
+    /*
     int len_shuffled_yrs = 3;
     int shuffled_yrs[] = {1951,1950,1952};
-    
+    */
     
     sprintf(ofname, "met_data/spinup/met_spinup_%d_%d.csv", i, j);
     ofp = fopen(ofname, "wb");
@@ -1314,7 +1325,7 @@ void calc_tam_tpm(float *Tam, float *Tpm, float Tmin, float Tmin_tomorrow,
     Reference
     ----------
     * McMurtie et al (1990) Modelling the Yield of Pinus radiata on a Site
-      Limited by Water and Nitrogen. Forest Ecology and Management, 30,
+      Limited by Water and Nitrogen. Foremainder Ecology and Management, 30,
       381-413.
     */
     float Tav, Tampl;
