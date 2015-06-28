@@ -73,7 +73,14 @@ int main(int argc, char **argv)
         fprintf(stderr,"You need to set row start/end on command line\n");
 		exit(EXIT_FAILURE);
     }
+    
+    if ((c->col_start == -999) || (c->col_end == -999)) {
+        fprintf(stderr,"You need to set col start/end on command line\n");
+		exit(EXIT_FAILURE);
+    }
+    
     c->nrows_in_slice = c->row_end - c->row_start;
+    c->ncols_in_slice = c->col_end - c->col_start;
     c->root_processor = 0;
     mpi_err = MPI_Init(&argc, &argv);
     mpi_err = MPI_Comm_rank(MPI_COMM_WORLD, &(c->rank));
@@ -106,8 +113,8 @@ int main(int argc, char **argv)
 
 	    c->num_land_pixels = 0;
 	    for (i = 0; i < c->nrows_in_slice; i++) {
-	        for (j = 0; j < c->ncols; j++) {
-	            offset = (i + c->row_start) * c->ncols + j;
+	        for (j = 0; j < c->ncols_in_slice; j++) {
+	            offset = (i + c->row_start) * c->ncols + (j + c->col_start);
 	            if (land_mask[offset] > c->land_id) {
 	                c->num_land_pixels++;
                 }
@@ -291,12 +298,18 @@ void clparser(int argc, char **argv, control *c) {
 		if (*argv[i] == '-') {
 			if (!strncasecmp(argv[i], "-lm", 3)) {
 			    strcpy(c->land_mask_fn, argv[++i]);
-			} else if (!strncasecmp(argv[i], "-s", 2)) {
+			} else if (!strncasecmp(argv[i], "-rs", 3)) {
 			    c->row_start = atoi(argv[++i]);
 			    c->row_start--; /* correct for 0 index */
-			} else if (!strncasecmp(argv[i], "-e", 2)) {
+			} else if (!strncasecmp(argv[i], "-re", 3)) {
 			    c->row_end = atoi(argv[++i]);
 			    c->row_end--; /* correct for 0 index */
+			} else if (!strncasecmp(argv[i], "-cs", 3)) {
+			    c->col_start = atoi(argv[++i]);
+			    c->col_start--; /* correct for 0 index */
+			} else if (!strncasecmp(argv[i], "-ce", 3)) {
+			    c->col_end = atoi(argv[++i]);
+			    c->col_end--; /* correct for 0 index */
 			} else {
                 fprintf(stderr,"%s: unknown argument on command line: %s\n",
                         argv[0], argv[i]);
@@ -315,6 +328,8 @@ void initialise_stuff(control *c) {
     c->ncols = 841;
 	c->row_end = -999;
 	c->row_start = -999;
+	c->col_start = -999;
+	c->col_end = -999;
     c->land_id = 0.5; /* Anything > 0.000001 */
     c->nsize = -999;
     c->remainder = -999;
@@ -353,11 +368,11 @@ void mask_ij(control *c, float *land_mask, int *land_ij) {
     long out_offset = 0, in_offset = 0;
 
     for (i = 0; i < c->nrows_in_slice; i++) {
-	    for (j = 0; j < c->ncols; j++) {
-            in_offset = (i + c->row_start) * c->ncols + j;
+	    for (j = 0; j < c->ncols_in_slice; j++) {
+            in_offset = (i + c->row_start) * c->ncols + (j + c->col_start);
 	        if (land_mask[in_offset] > c->land_id) {
 	            land_ij[out_offset] = c->row_start + i;
-	            land_ij[out_offset+1] = j ;
+	            land_ij[out_offset+1] = c->col_start + j ;
                 out_offset += 2;
             }
         }

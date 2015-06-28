@@ -25,9 +25,9 @@
 typedef struct  {
     int    row_start;
     int    row_end;
-    int    nrows_in_slice;
     int    col_start;
     int    col_end;
+    int    nrows_in_slice;
     int    ncols_in_slice;
     int    ncols;
     int    nrows;
