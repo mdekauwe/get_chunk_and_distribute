@@ -49,7 +49,9 @@ int main(int argc, char **argv)
     int    npairs;
     long   pixel_count;
     
-    /*MPI_Status status;*/
+    /*
+    ** Set stuff up...structures, peak at the cmd line etc.
+    */    
     FILE *land_mask_fp = NULL;
 
     control *c;
@@ -79,9 +81,10 @@ int main(int argc, char **argv)
 		exit(EXIT_FAILURE);
     }
     
+    /* potential to work on chunks of the whole Australia domain */
     c->nrows_in_slice = c->row_end - c->row_start;
     c->ncols_in_slice = c->col_end - c->col_start;
-    c->root_processor = 0;
+    c->root_processor = 0; /* controller */
     mpi_err = MPI_Init(&argc, &argv);
     mpi_err = MPI_Comm_rank(MPI_COMM_WORLD, &(c->rank));
     mpi_err = MPI_Comm_size(MPI_COMM_WORLD, &(c->size));
@@ -110,7 +113,11 @@ int main(int argc, char **argv)
 		    MPI_Abort(MPI_COMM_WORLD, -1);
 	    }
 	    fclose(land_mask_fp);
-
+        
+        /* 
+        ** use the land/sea mask to run through the chunk and make sure we 
+        ** aren't processing sea pixels. This just speeds things up a bit
+        */
 	    c->num_land_pixels = 0;
 	    for (i = 0; i < c->nrows_in_slice; i++) {
 	        for (j = 0; j < c->ncols_in_slice; j++) {
@@ -129,7 +136,8 @@ int main(int argc, char **argv)
 	    }
         mask_ij(c, land_mask, land_ij);
     }
-
+    
+    /* make the number of land pixels accessible to all the processors */
     if (MPI_Bcast(&(c->num_land_pixels), 1, MPI_INT, c->root_processor,
                   MPI_COMM_WORLD) != MPI_SUCCESS) {
         fprintf(stderr, "Error broadcasting num_land_pixels\n");
@@ -138,11 +146,12 @@ int main(int argc, char **argv)
 
     c->nsize = c->num_land_pixels / c->size;
     
-    /* elements remaining after division among processes */
+    /* elements remaining after division among processors */
     c->remainder = c->num_land_pixels - (c->nsize * c->size);
     
     read_met_data_slice(c, m, land_ij);
-
+    
+    /* divide the met data in i,j pairs between processors */
     npairs = distribute_ij(c, land_ij, &pairs);
     
     if (npairs < 0) {
@@ -321,9 +330,11 @@ void clparser(int argc, char **argv, control *c) {
 }
 
 void initialise_stuff(control *c) {
-
+    
+    /* should probably add these to the cmd line */
     strcpy(c->land_mask_fn, "DATA/land_mask/AWAP_land_mask.flt");
-
+    strcpy(c->fdir, "AWAP_data");
+    
     c->nrows = 681;
     c->ncols = 841;
 	c->row_end = -999;
@@ -336,16 +347,12 @@ void initialise_stuff(control *c) {
     c->cellsize = 0.05;
     c->xllcorner = 111.975;
     c->yllcorner = -44.025;
-    
-    
-    
     c->start_yr = 1960;
     c->end_yr = 2011;
     c->start_yr_forcing = 1990;
     c->end_yr_forcing = 2011;
     c->start_yr_rad = 1990;
     c->end_yr_rad = 2011;
-    
     
     /*
     c->start_yr = 1950;
@@ -356,14 +363,14 @@ void initialise_stuff(control *c) {
     c->end_yr_forcing = 2011;
     */
     
-    strcpy(c->fdir, "AWAP_data");
-
-
     return;
 }
 
 void mask_ij(control *c, float *land_mask, int *land_ij) {
-
+    /* 
+        Build an array of just the land pixels that fit within our desired
+        chunk - nrows_in_slice * ncols_in_slice
+    */
     int  i, j;
     long out_offset = 0, in_offset = 0;
 
@@ -380,13 +387,16 @@ void mask_ij(control *c, float *land_mask, int *land_ij) {
 }
 
 void read_met_data_slice(control *c, met *m, int *land_ij) {
-
+    /*
+        Loop over all the met files, build an array for each i,j pair (get_data)
+        and send to an appropriate processor (distribute).
+    */
+    
     /*int    i, j, k;
     uint64_t   offset;*/
     float *met_data = NULL;
-    int    total_days, total_days_rad;
-    int    yr;
-    int tag1 = 101, tag2 = 102, tag3 = 103, tag4 = 104, tag5 = 105, tag6 = 106;
+    int    tag1 = 101, tag2 = 102, tag3 = 103, tag4 = 104, tag5 = 105, 
+           tag6 = 106, yr, total_days, total_days_rad;
 
     /*
         Count the number of days to size arrays
@@ -569,7 +579,11 @@ void read_met_data_slice(control *c, met *m, int *land_ij) {
 
 void get_data(control *c, char *met_var, int total_days, float **met_data,
               int **dates, int *land_ij) {
-
+    /* 
+        For each met variable, loop over all the years, months, days 
+        (number of files) and build a big array holding all the data for each 
+        i,j land pixel pair
+    */
     int    day_count, i, j, k, date_count;
     long   in_offset, out_offset, out_offset2;
     float *met_data_day = NULL;
@@ -666,7 +680,6 @@ void get_data(control *c, char *met_var, int total_days, float **met_data,
                     out_offset = day_count + num_days_offset;
                     out_offset2 = day_count * c->num_land_pixels + pixel_count;
                     
-                    
                     (*met_data)[out_offset] = met_data_day[in_offset];
                     
                     /*
@@ -676,7 +689,6 @@ void get_data(control *c, char *met_var, int total_days, float **met_data,
                         }
                     }
                     */
-                    
                     
                     pixel_count++;
                     num_days_offset += total_days;
@@ -703,7 +715,11 @@ void get_data(control *c, char *met_var, int total_days, float **met_data,
 
 int  distribute(control *c, int *land_ij, float *met_data, float **my_data,
                int tag, int ndays) {
-
+    /* 
+        Divide the met data array into chunks and send to the different 
+        available processors
+    */
+    
     int     ii, k, mpi_err;
     int     remainder = 0, index;
     long     size_to_send = 0, size_my_data;
@@ -876,7 +892,6 @@ void build_radiation_clim(control *c, int *rad_dates, float *rad,
             if (month == 1) {
                 jan += rad[date_offset2];
                 jan_ndays++;
-                /*printf("%f %d %ld\n", rad[date_offset2], jan_ndays, date_offset2);*/
             } else if (month == 2) {
                 feb += rad[date_offset2];
                 feb_ndays++;
@@ -943,8 +958,6 @@ void build_radiation_clim(control *c, int *rad_dates, float *rad,
         }
     }
     
-    
-
     for (doy = 0; doy < 366; doy++) {
         if (doy >= 0 && doy < 31) {
             (*rad_clim_leap)[doy] = jan / (float)jan_ndays;
@@ -1000,13 +1013,15 @@ void write_spinup_file(int i, int j, control *c, met *m, float *tmax_ij,
     float J_TO_UMOL = 4.6;
     float SW_TO_PAR = 0.48;
     
-    
+    /* 
+        this sequence of years was randomly generated outside of the code
+        get_random_50_years_for_spinup.py
+    */
     int shuffled_yrs[] = {1964, 1962, 1970, 1989, 1968, 1985, 1973, 1977, 1972, 
                           1969, 1987, 1983, 1984, 1982, 1962, 1971, 1968, 1962, 
                           1965, 1990, 1960, 1977, 1969, 1966, 1968, 1965, 1982, 
                           1985, 1980, 1966};
     int len_shuffled_yrs = 30;
-    
     
     /*
     int len_shuffled_yrs = 3;
@@ -1110,8 +1125,6 @@ void write_spinup_file(int i, int j, control *c, met *m, float *tmax_ij,
 
              doy_cnt++;
         }
-        
-        
         
     }
     fclose(ofp);
