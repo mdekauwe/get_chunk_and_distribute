@@ -890,41 +890,77 @@ void build_radiation_clim(control *c, int *rad_dates, float *rad,
             date_offset += 3;
 
             if (month == 1) {
-                jan += rad[date_offset2];
-                jan_ndays++;
+                /* Need to exclude -999 days in our climatology */
+                if (rad[date_offset2] >= 0.0) {
+                    jan += rad[date_offset2];
+                    jan_ndays++;
+                }
             } else if (month == 2) {
-                feb += rad[date_offset2];
-                feb_ndays++;
+                /* Need to exclude -999 days in our climatology */
+                if (rad[date_offset2] >= 0.0) {
+                    feb += rad[date_offset2];
+                    feb_ndays++;
+                }
             } else if (month == 3) {
-                mar += rad[date_offset2];
+                /* Need to exclude -999 days in our climatology */
+                if (rad[date_offset2] >= 0.0) {
+                    mar += rad[date_offset2];
                 mar_ndays++;
+                }
             } else if (month == 4) {
-                apr += rad[date_offset2];
-                apr_ndays++;
+                /* Need to exclude -999 days in our climatology */
+                if (rad[date_offset2] >= 0.0) {
+                    apr += rad[date_offset2];
+                    apr_ndays++;
+                }
             } else if (month == 5) {
-                may += rad[date_offset2];
-                may_ndays++;
+                /* Need to exclude -999 days in our climatology */
+                if (rad[date_offset2] >= 0.0) {
+                    may += rad[date_offset2];
+                    may_ndays++;
+                }
             } else if (month == 6) {
-                jun += rad[date_offset2];
-                jun_ndays++;
+                /* Need to exclude -999 days in our climatology */
+                if (rad[date_offset2] >= 0.0) {
+                    jun += rad[date_offset2];
+                    jun_ndays++;
+                }
             } else if (month == 7) {
-                jul += rad[date_offset2];
-                jul_ndays++;
+                /* Need to exclude -999 days in our climatology */
+                if (rad[date_offset2] >= 0.0) {
+                    jul += rad[date_offset2];
+                    jul_ndays++;
+                }
             } else if (month == 8) {
-                aug += rad[date_offset2];
-                aug_ndays++;
+                /* Need to exclude -999 days in our climatology */
+                if (rad[date_offset2] >= 0.0) {
+                    aug += rad[date_offset2];
+                    aug_ndays++;
+                }
             } else if (month == 9) {
-                sep += rad[date_offset2];
-                sep_ndays++;
+                /* Need to exclude -999 days in our climatology */
+                if (rad[date_offset2] >= 0.0) {
+                    sep += rad[date_offset2];
+                    sep_ndays++;
+                }
             } else if (month == 10) {
-                oct += rad[date_offset2];
-                oct_ndays++;
+                /* Need to exclude -999 days in our climatology */
+                if (rad[date_offset2] >= 0.0) {
+                    oct += rad[date_offset2];
+                    oct_ndays++;
+                }
             } else if (month == 11) {
-                nov += rad[date_offset2];
-                nov_ndays++;
+                /* Need to exclude -999 days in our climatology */
+                if (rad[date_offset2] >= 0.0) {
+                   nov += rad[date_offset2];
+                    nov_ndays++;
+                }
             } else if (month == 12) {
-                dec += rad[date_offset2];
-                dec_ndays++;
+                /* Need to exclude -999 days in our climatology */
+                if (rad[date_offset2] >= 0.0) {
+                    dec += rad[date_offset2];
+                    dec_ndays++;
+                }
             }
             date_offset2++;
         }
