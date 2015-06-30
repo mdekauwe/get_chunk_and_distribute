@@ -1293,7 +1293,22 @@ void write_forcing_file(int i, int j, control *c, met *m, float *tmax_ij,
                sw = rad_clim_leap_ij[doy_cnt];
            else
                sw = rad_ij[jj];
-
+            
+            
+            /* 
+                There are a sequence (as much as 12 days, perhaps more) of bad 
+                PAR data in the AWAP data for certain pixels. If we hit one of 
+                these instances we are going to infill based on the climatology.
+                Because it looks like long sequences are missing it makes no
+                sense to attempt to fill with days around the bad day I think 
+            */
+            if (sw < 0.0 && ndays == 365) {
+                sw = rad_clim_nonleap_ij[doy_cnt];
+            } else if (sw < 0.0 && ndays == 366) {
+                sw = rad_clim_leap_ij[doy_cnt];
+            }
+            
+            
             sw_am = sw / 2.0;
             sw_pm = sw / 2.0;
             sw_w_m2 = sw * 11.574;
