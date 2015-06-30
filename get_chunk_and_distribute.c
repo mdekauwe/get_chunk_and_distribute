@@ -864,6 +864,11 @@ void build_radiation_clim(control *c, int *rad_dates, float *rad,
     /* The radiation data does not overlap (1990-2011) the other met
        forcing, so we need to build a climatology to effectively gap fill for
        the spin up files
+       
+       There appear to be quite a few "bad days = -999", from a quick look in
+       November, DOY=320-332, but likely in other places as well. We will skip
+       these dates when building the climatology
+       
     */
     long  date_offset, date_offset2;
     int   doy, yr, year, month, day, ndays;
