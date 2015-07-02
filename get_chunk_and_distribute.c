@@ -266,10 +266,11 @@ int main(int argc, char **argv)
         build_radiation_clim(c, m->rad_dates, rad_ij, &rad_clim_nonleap_ij,
                              &rad_clim_leap_ij);
 
-
+        /* Spin up using 1960-1990 data */
         write_spinup_file(i, j, c, m, tmax_ij, tmin_ij, rain_ij, vph09_ij,
                           vph15_ij, rad_clim_nonleap_ij, rad_clim_leap_ij);
-
+        
+        /* forcing using 1960-1990 data - pre-industrial CO2 */
         write_forcing_file(i, j, c, m, tmax_ij, tmin_ij, rain_ij,
                            vph09_ij, vph15_ij, rad_ij, rad_clim_nonleap_ij,
                            rad_clim_leap_ij);
@@ -309,16 +310,12 @@ void clparser(int argc, char **argv, control *c) {
 			    strcpy(c->land_mask_fn, argv[++i]);
 			} else if (!strncasecmp(argv[i], "-rs", 3)) {
 			    c->row_start = atoi(argv[++i]);
-			    c->row_start--; /* correct for 0 index */
 			} else if (!strncasecmp(argv[i], "-re", 3)) {
 			    c->row_end = atoi(argv[++i]);
-			    c->row_end--; /* correct for 0 index */
 			} else if (!strncasecmp(argv[i], "-cs", 3)) {
 			    c->col_start = atoi(argv[++i]);
-			    c->col_start--; /* correct for 0 index */
 			} else if (!strncasecmp(argv[i], "-ce", 3)) {
 			    c->col_end = atoi(argv[++i]);
-			    c->col_end--; /* correct for 0 index */
 			} else {
                 fprintf(stderr,"%s: unknown argument on command line: %s\n",
                         argv[0], argv[i]);
@@ -348,20 +345,12 @@ void initialise_stuff(control *c) {
     c->xllcorner = 111.975;
     c->yllcorner = -44.025;
     c->start_yr = 1960;
-    c->end_yr = 2011;
-    c->start_yr_forcing = 1990;
-    c->end_yr_forcing = 2011;
+    c->end_yr = 1990;
+    c->start_yr_forcing = 1960;
+    c->end_yr_forcing = 1990;
     c->start_yr_rad = 1990;
     c->end_yr_rad = 2011;
     
-    /*
-    c->start_yr = 1950;
-    c->end_yr = 1952;
-    c->start_yr_rad = 1990;
-    c->end_yr_rad = 2011;
-    c->start_yr_forcing = 1990;
-    c->end_yr_forcing = 2011;
-    */
     
     return;
 }
@@ -1077,8 +1066,9 @@ void write_spinup_file(int i, int j, control *c, met *m, float *tmax_ij,
     current_time = time(NULL);
     c_time_string = ctime(&current_time);
 
-    fprintf(ofp, "# Daily met: Row:%d x Col:%d\n", i, j);
-    fprintf(ofp, "#            Lat:%f x Lon:%f\n", latitude, longitude);
+    fprintf(ofp, "# Daily met: Row:%d x Col:%d ;  Lat:%f x Lon:%f\n", i, j, 
+                                                           latitude, longitude);
+    fprintf(ofp, "# Data from %d-%d\n", c->start_yr, c->end_yr);
     fprintf(ofp, "# Created by Martin De Kauwe: %s", c_time_string);
     fprintf(ofp, "#--',--,mj/m2/day,c,mm,c,c,c,kPa,kPa,kPa,ppm,t/ha/year,");
     fprintf(ofp, "m/s,kPa,umol/m2/d,m/s,m/s,mj/m2/am,mj/m2/pm\n");
@@ -1197,7 +1187,7 @@ void write_forcing_file(int i, int j, control *c, met *m, float *tmax_ij,
     float MJ_TO_J = 1.0 / 1.0E-6;
     float J_TO_UMOL = 4.6;
     float SW_TO_PAR = 0.48;
-    sprintf(ofname, "met_data/forcing/met_forcing_%d_%d.csv", i, j);
+    sprintf(ofname, "met_data/forcing/met_forcing_preindustco2_%d_%d.csv", i, j);
 
     ofp = fopen(ofname, "wb");
 
@@ -1208,8 +1198,9 @@ void write_forcing_file(int i, int j, control *c, met *m, float *tmax_ij,
     current_time = time(NULL);
     c_time_string = ctime(&current_time);
 
-    fprintf(ofp, "# Daily met: Row:%d x Col:%d\n", i, j);
-    fprintf(ofp, "#            Lat:%f x Lon:%f\n", latitude, longitude);
+    fprintf(ofp, "# Daily met: Row:%d x Col:%d ;  Lat:%f x Lon:%f\n", i, j, 
+                                                           latitude, longitude);
+    fprintf(ofp, "# Data from %d-%d\n", c->start_yr_forcing, c->end_yr_forcing);
     fprintf(ofp, "# Created by Martin De Kauwe: %s", c_time_string);
     fprintf(ofp, "#--,--,mj/m2/day,c,mm,c,c,c,kPa,kPa,kPa,ppm,t/ha/year,");
     fprintf(ofp, "m/s,kPa,umol/m2/d,m/s,m/s,mj/m2/am,mj/m2/pm\n");
