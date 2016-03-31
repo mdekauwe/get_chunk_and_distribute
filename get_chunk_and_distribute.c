@@ -1,23 +1,23 @@
 /*
-** 
+**
 ** PROGRAM:
 **              get_chunk_and_distribute
 **
 ** DESCRIPTION:
-**              Extract a chunk (num_rows x total_cols) from the AWAP 
-**              meteorological data and create a GDAY spinup and forcing 
-**              simulation file for each row and col within the chunk of 
+**              Extract a chunk (num_rows x total_cols) from the AWAP
+**              meteorological data and create a GDAY spinup and forcing
+**              simulation file for each row and col within the chunk of
 **              Australia. The code then divides the pixels between processors
 **              using the MPI libraries.
 **
-**              We don't have overlapping radiation data, i.e. nothing before 
-**              1990, so we need to build a climatology and in fill with that 
+**              We don't have overlapping radiation data, i.e. nothing before
+**              1990, so we need to build a climatology and in fill with that
 **              for our spinup files.
 **
 ** NOTES:
 **              run cmd:
 **              mpirun -np 8 get_chunk_and_distribute -s 300 -e 301
-**                     
+**
 **
 ** AUTHOR:      Martin De Kauwe with MPI assistance from Andrey Bliznyuk@NCI
 **
@@ -48,10 +48,10 @@ int main(int argc, char **argv)
     int    mpi_err =0;
     int    npairs;
     long   pixel_count;
-    
+
     /*
     ** Set stuff up...structures, peak at the cmd line etc.
-    */    
+    */
     FILE *land_mask_fp = NULL;
 
     control *c;
@@ -75,12 +75,12 @@ int main(int argc, char **argv)
         fprintf(stderr,"You need to set row start/end on command line\n");
 		exit(EXIT_FAILURE);
     }
-    
+
     if ((c->col_start == -999) || (c->col_end == -999)) {
         fprintf(stderr,"You need to set col start/end on command line\n");
 		exit(EXIT_FAILURE);
     }
-    
+
     /* potential to work on chunks of the whole Australia domain */
     c->nrows_in_slice = c->row_end - c->row_start;
     c->ncols_in_slice = c->col_end - c->col_start;
@@ -113,9 +113,9 @@ int main(int argc, char **argv)
 		    MPI_Abort(MPI_COMM_WORLD, -1);
 	    }
 	    fclose(land_mask_fp);
-        
-        /* 
-        ** use the land/sea mask to run through the chunk and make sure we 
+
+        /*
+        ** use the land/sea mask to run through the chunk and make sure we
         ** aren't processing sea pixels. This just speeds things up a bit
         */
 	    c->num_land_pixels = 0;
@@ -136,7 +136,7 @@ int main(int argc, char **argv)
 	    }
         mask_ij(c, land_mask, land_ij);
     }
-    
+
     /* make the number of land pixels accessible to all the processors */
     if (MPI_Bcast(&(c->num_land_pixels), 1, MPI_INT, c->root_processor,
                   MPI_COMM_WORLD) != MPI_SUCCESS) {
@@ -145,15 +145,15 @@ int main(int argc, char **argv)
     }
 
     c->nsize = c->num_land_pixels / c->size;
-    
+
     /* elements remaining after division among processors */
     c->remainder = c->num_land_pixels - (c->nsize * c->size);
-    
+
     read_met_data_slice(c, m, land_ij);
-    
+
     /* divide the met data in i,j pairs between processors */
     npairs = distribute_ij(c, land_ij, &pairs);
-    
+
     if (npairs < 0) {
         fprintf(stderr,"Error in distribute_ij\n");
 		MPI_Abort(MPI_COMM_WORLD, mpi_err);
@@ -189,7 +189,7 @@ int main(int argc, char **argv)
         fprintf(stderr,"Error allocating space for rad_ij array\n");
 		MPI_Abort(MPI_COMM_WORLD, -1);
     }
-    
+
     if ((years_ij_rad = (int *)calloc(m->rad_ndays,
                         sizeof(int))) == NULL) {
         fprintf(stderr,"Error allocating space for years_ij_rad array\n");
@@ -207,51 +207,51 @@ int main(int argc, char **argv)
         fprintf(stderr,"Error allocating space for rad_clim_leap_ij array\n");
 		MPI_Abort(MPI_COMM_WORLD, -1);
     }
-    
-    /* 
-        Each set of npairs is the total met data array divided by the number of 
-        cores, so we are working on a chunk here. For each chunk we will loop 
+
+    /*
+        Each set of npairs is the total met data array divided by the number of
+        cores, so we are working on a chunk here. For each chunk we will loop
         over the i,j pair unpack each met var and write the i,j met driving file
         for GDAY.
-        
+
         The unpacking logic, is reversed from the packing logic, but works fine
         because the num_day_offset has been appropriately moved to match the
         k loop
     */
-    
+
     pixel_count = 0;
     for (k = 0; k < npairs; k+=2) {
         i = pairs[k];
         j = pairs[k+1];
-        
+
         idx = 0;
         for (day_count = 0; day_count < m->tmax_ndays; day_count++) {
             /*offset = day_count + num_days_offset;*/
             offset = pixel_count * m->tmax_ndays + day_count;
-            
+
             tmax_ij[idx] = m->tmax_slice[offset];
             tmin_ij[idx] = m->tmin_slice[offset];
             rain_ij[idx] = m->rain_slice[offset];
             vph09_ij[idx] = m->vph09_slice[offset];
             vph15_ij[idx] = m->vph15_slice[offset];
-            
+
             /*
             if ((i == 299) && (j == 321)) {
                 printf("%f\n", m->tmax_slice[offset]);
-            } 
+            }
             */
-            idx++;     
+            idx++;
         }
-        
+
         idx = 0;
         date_offset = 0;
         for (day_count = 0; day_count < m->rad_ndays; day_count++) {
             /*offset = day_count + num_days_offset_rad;*/
             offset = pixel_count * m->rad_ndays + day_count;
-            
+
             years_ij_rad[idx] = m->rad_dates[date_offset];
             rad_ij[idx] = m->rad_slice[offset];
-            
+
             /*
             if ((i == 299) && (j == 321)) {
                 printf("%f\n", m->rad_slice[offset]);
@@ -261,7 +261,7 @@ int main(int argc, char **argv)
             idx++;
         }
         pixel_count++;
-        
+
         /* Build a climatology from the radiation data 1990-2011 */
         build_radiation_clim(c, m->rad_dates, rad_ij, &rad_clim_nonleap_ij,
                              &rad_clim_leap_ij);
@@ -269,21 +269,21 @@ int main(int argc, char **argv)
         /* Spin up using 1960-1990 data */
         write_spinup_file(i, j, c, m, tmax_ij, tmin_ij, rain_ij, vph09_ij,
                           vph15_ij, rad_clim_nonleap_ij, rad_clim_leap_ij);
-        
+
         /* forcing using 1960-1990 data - pre-industrial CO2 */
         write_forcing_file(i, j, c, m, tmax_ij, tmin_ij, rain_ij,
                            vph09_ij, vph15_ij, rad_ij, rad_clim_nonleap_ij,
                            rad_clim_leap_ij);
     }
-    
-    
+
+
     /* Stop this process */
     mpi_err = MPI_Finalize();
     if (mpi_err != MPI_SUCCESS) {
         fprintf(stderr, "Error shutting down MPI processes");
         MPI_Abort(MPI_COMM_WORLD, mpi_err);
     }
-    
+
     free(c);
     free(m);
     free(land_mask);
@@ -297,7 +297,7 @@ int main(int argc, char **argv)
     free(rad_ij);
     free(rad_clim_nonleap_ij);
     free(rad_clim_leap_ij);
-    
+
     return (EXIT_SUCCESS);
 }
 
@@ -327,11 +327,11 @@ void clparser(int argc, char **argv, control *c) {
 }
 
 void initialise_stuff(control *c) {
-    
+
     /* should probably add these to the cmd line */
     strcpy(c->land_mask_fn, "DATA/land_mask/AWAP_land_mask.flt");
     strcpy(c->fdir, "AWAP_data");
-    
+
     c->nrows = 681;
     c->ncols = 841;
 	c->row_end = -999;
@@ -344,19 +344,21 @@ void initialise_stuff(control *c) {
     c->cellsize = 0.05;
     c->xllcorner = 111.975;
     c->yllcorner = -44.025;
+    c->xurcorner = 154.025;
+    c->yurcorner = -9.975;
     c->start_yr = 1960;
     c->end_yr = 1990;
     c->start_yr_forcing = 1960;
     c->end_yr_forcing = 1990;
     c->start_yr_rad = 1990;
     c->end_yr_rad = 2011;
-    
-    
+
+
     return;
 }
 
 void mask_ij(control *c, float *land_mask, int *land_ij) {
-    /* 
+    /*
         Build an array of just the land pixels that fit within our desired
         chunk - nrows_in_slice * ncols_in_slice
     */
@@ -380,11 +382,11 @@ void read_met_data_slice(control *c, met *m, int *land_ij) {
         Loop over all the met files, build an array for each i,j pair (get_data)
         and send to an appropriate processor (distribute).
     */
-    
+
     /*int    i, j, k;
     uint64_t   offset;*/
     float *met_data = NULL;
-    int    tag1 = 101, tag2 = 102, tag3 = 103, tag4 = 104, tag5 = 105, 
+    int    tag1 = 101, tag2 = 102, tag3 = 103, tag4 = 104, tag5 = 105,
            tag6 = 106, yr, total_days, total_days_rad;
 
     /*
@@ -398,10 +400,10 @@ void read_met_data_slice(control *c, met *m, int *land_ij) {
             total_days += 365;
         }
     }
-    
+
     /*
         Count the number of days to size arrays
-        For the Rad data the timeseries is shorter, 1990-2011, as opposed to 
+        For the Rad data the timeseries is shorter, 1990-2011, as opposed to
         1950-2011 so we need to build a shorter array.
     */
     total_days_rad = 0;
@@ -448,7 +450,7 @@ void read_met_data_slice(control *c, met *m, int *land_ij) {
 
     if (c->rank == c->root_processor) {
         get_data(c, "tmin", m->tmin_ndays, &met_data, &m->tmin_dates, land_ij);
-    
+
     }
 
     if (MPI_Bcast(&(*m->tmin_dates), m->tmin_ndays*3, MPI_INT, c->root_processor,
@@ -551,7 +553,7 @@ void read_met_data_slice(control *c, met *m, int *land_ij) {
     if (c->rank == c->root_processor) {
         get_data(c, "rad", m->rad_ndays, &met_data, &m->rad_dates, land_ij);
     }
-    
+
     if (MPI_Bcast(&(*m->rad_dates), m->rad_ndays*3, MPI_INT, c->root_processor,
                   MPI_COMM_WORLD) != MPI_SUCCESS) {
         fprintf(stderr, "Error broadcasting rad_dates\n");
@@ -561,16 +563,16 @@ void read_met_data_slice(control *c, met *m, int *land_ij) {
                              m->rad_ndays);
     free(met_data);
     met_data = NULL;
-    
+
     return;
 }
 
 
 void get_data(control *c, char *met_var, int total_days, float **met_data,
               int **dates, int *land_ij) {
-    /* 
-        For each met variable, loop over all the years, months, days 
-        (number of files) and build a big array holding all the data for each 
+    /*
+        For each met variable, loop over all the years, months, days
+        (number of files) and build a big array holding all the data for each
         i,j land pixel pair
     */
     int    day_count, i, j, k, date_count;
@@ -585,13 +587,13 @@ void get_data(control *c, char *met_var, int total_days, float **met_data,
     char  iday[3];
     long  num_days_offset;
     char  infname[STRING_LENGTH];
-    
-    
+
+
     if ((*met_data = (float *)calloc(total_days * c->num_land_pixels,
                       sizeof(float))) == NULL ) {
         fprintf(stderr, "Error allocating space for met_data array\n");
     }
-    
+
     if ((met_data_day = (float *)calloc(c->nrows * c->ncols,
                          sizeof(float))) == NULL) {
          fprintf(stderr, "Error allocating space for met array\n");
@@ -659,31 +661,31 @@ void get_data(control *c, char *met_var, int total_days, float **met_data,
                 for (k = 0; k < c->num_land_pixels * 2; k += 2) {
                     i = land_ij[k],
                     j = land_ij[k+1];
-                    
+
                     in_offset = i * c->ncols + j;
-                    /* 
+                    /*
                         Looping over num_pixels in the internal loop so we need
                         to jump total_days ahead for each pixel + current day
                         count.
                     */
                     out_offset = day_count + num_days_offset;
                     out_offset2 = day_count * c->num_land_pixels + pixel_count;
-                    
+
                     (*met_data)[out_offset] = met_data_day[in_offset];
-                    
+
                     /*
                     if ((strncmp(met_var, "tmax", 4) == 0)) {
                         if ((i == 299) && (j == 321)) {
-                            printf("%f\n", met_data_day[in_offset]);  
+                            printf("%f\n", met_data_day[in_offset]);
                         }
                     }
                     */
-                    
+
                     pixel_count++;
                     num_days_offset += total_days;
                 }
-                
-                
+
+
                 (*dates)[date_count] = yr;
                 (*dates)[date_count+1] = mth;
                 (*dates)[date_count+2] = day;
@@ -694,9 +696,9 @@ void get_data(control *c, char *met_var, int total_days, float **met_data,
     }
 
     free(met_data_day);
-    
-    
-    
+
+
+
     return ;
 }
 
@@ -704,11 +706,11 @@ void get_data(control *c, char *met_var, int total_days, float **met_data,
 
 int  distribute(control *c, int *land_ij, float *met_data, float **my_data,
                int tag, int ndays) {
-    /* 
-        Divide the met data array into chunks and send to the different 
+    /*
+        Divide the met data array into chunks and send to the different
         available processors
     */
-    
+
     int     ii, k, mpi_err;
     int     remainder = 0, index;
     long     size_to_send = 0, size_my_data;
@@ -716,7 +718,7 @@ int  distribute(control *c, int *land_ij, float *met_data, float **my_data,
 
     /* Enough space to fit all data on a process*/
     size_my_data = ndays * (c->nsize + 1);
-    
+
     if ((*my_data = (float *)calloc(size_my_data, sizeof(float))) == NULL ) {
         fprintf(stderr, "Error allocating space for pairs array\n");
         MPI_Abort(MPI_COMM_WORLD, -1);
@@ -783,16 +785,16 @@ int  distribute(control *c, int *land_ij, float *met_data, float **my_data,
 int distribute_ij(control *c, int *land_ij, int **pairs) {
     /*
         Divide the total number of land pixels between the various processors.
-        
-        Return the number of pairs (i,j). Note the number of pairs is double 
-        the number of c->num_land_pixels / num processors, because we are 
+
+        Return the number of pairs (i,j). Note the number of pairs is double
+        the number of c->num_land_pixels / num processors, because we are
         dividing up land_ij which for contains both the i + j pair.
     */
     int  i, mpi_err, index;
     int *position = NULL;   /* displacement index for various processors */
     int *send_count = NULL; /* number of elements sent to each processor */
     int  pairs_size = 2 * (c->nsize + 1);
-    
+
     if ((*pairs = (int *)calloc(pairs_size, sizeof(int))) == NULL) {
         fprintf(stderr, "Error allocating space for pairs array\n");
         MPI_Abort(MPI_COMM_WORLD, -1);
@@ -808,7 +810,7 @@ int distribute_ij(control *c, int *land_ij, int **pairs) {
 	        fprintf(stderr, "Error allocating space for position array\n");
 		    MPI_Abort(MPI_COMM_WORLD, -1);
         }
-        
+
         /* Calculate send counts & displacements */
         index = 0;
         for(i = 0; i < c->remainder; i++) {
@@ -816,7 +818,7 @@ int distribute_ij(control *c, int *land_ij, int **pairs) {
             position[i] = index;
             index += 2 * (c->nsize + 1);
         }
-         
+
         for (i = c->remainder; i < c->size; i++) {
             send_count[i] = 2 * c->nsize;
             position[i] = index;
@@ -853,11 +855,11 @@ void build_radiation_clim(control *c, int *rad_dates, float *rad,
     /* The radiation data does not overlap (1990-2011) the other met
        forcing, so we need to build a climatology to effectively gap fill for
        the spin up files
-       
+
        There appear to be quite a few "bad days = -999", from a quick look in
        November, DOY=320-332, but likely in other places as well. We will skip
        these dates when building the climatology
-       
+
     */
     long  date_offset, date_offset2;
     int   doy, yr, year, month, day, ndays;
@@ -987,7 +989,7 @@ void build_radiation_clim(control *c, int *rad_dates, float *rad,
             (*rad_clim_nonleap)[doy] = dec / (float)dec_ndays;
         }
     }
-    
+
     for (doy = 0; doy < 366; doy++) {
         if (doy >= 0 && doy < 31) {
             (*rad_clim_leap)[doy] = jan / (float)jan_ndays;
@@ -1042,31 +1044,31 @@ void write_spinup_file(int i, int j, control *c, met *m, float *tmax_ij,
     float MJ_TO_J = 1.0 / 1.0E-6;
     float J_TO_UMOL = 4.6;
     float SW_TO_PAR = 0.48;
-    
-    /* 
+
+    /*
         this sequence of years was randomly generated outside of the code
         get_random_50_years_for_spinup.py
     */
-    int shuffled_yrs[] = {1964, 1962, 1970, 1989, 1968, 1985, 1973, 1977, 1972, 
-                          1969, 1987, 1983, 1984, 1982, 1962, 1971, 1968, 1962, 
-                          1965, 1990, 1960, 1977, 1969, 1966, 1968, 1965, 1982, 
+    int shuffled_yrs[] = {1964, 1962, 1970, 1989, 1968, 1985, 1973, 1977, 1972,
+                          1969, 1987, 1983, 1984, 1982, 1962, 1971, 1968, 1962,
+                          1965, 1990, 1960, 1977, 1969, 1966, 1968, 1965, 1982,
                           1985, 1980, 1966};
     int len_shuffled_yrs = 30;
-    
+
     /*
     int len_shuffled_yrs = 3;
     int shuffled_yrs[] = {1951,1950,1952};
     */
-    
+
     sprintf(ofname, "met_data/spinup/met_spinup_%d_%d.csv", i, j);
     ofp = fopen(ofname, "wb");
 
-    latitude = c->yllcorner + (i * c->cellsize);
-    longitude = c->xllcorner + (j  * c->cellsize);
+    latitude = c->yurcorner - (i * c->cellsize);
+    longitude = c->xllcorner + (j * c->cellsize);
     current_time = time(NULL);
     c_time_string = ctime(&current_time);
 
-    fprintf(ofp, "# Daily met: Row:%d x Col:%d ;  Lat:%f x Lon:%f\n", i, j, 
+    fprintf(ofp, "# Daily met: Row:%d x Col:%d ;  Lat:%f x Lon:%f\n", i, j,
                                                            latitude, longitude);
     fprintf(ofp, "# Data from %d-%d\n", c->start_yr, c->end_yr);
     fprintf(ofp, "# Created by Martin De Kauwe: %s", c_time_string);
@@ -1156,7 +1158,7 @@ void write_spinup_file(int i, int j, control *c, met *m, float *tmax_ij,
 
              doy_cnt++;
         }
-        
+
     }
     fclose(ofp);
 
@@ -1174,7 +1176,7 @@ void write_forcing_file(int i, int j, control *c, met *m, float *tmax_ij,
     time_t current_time;
     char*  c_time_string;
     FILE *ofp;
-    
+
     long date_offset;
     int k=0, kk, jj, yr_to_get, st_idx, en_idx, ndays, doy_cnt, year,st_idx_rad;
     float co2=0.0, ndep=0.0, wind_sp=0.0, atpress=0.0, wind_am=0.0;
@@ -1191,14 +1193,14 @@ void write_forcing_file(int i, int j, control *c, met *m, float *tmax_ij,
 
     ofp = fopen(ofname, "wb");
 
-    latitude = c->yllcorner + (i * c->cellsize);
+    latitude = c->yurcorner - (i * c->cellsize);
     longitude = c->xllcorner + (j * c->cellsize);
 
 
     current_time = time(NULL);
     c_time_string = ctime(&current_time);
 
-    fprintf(ofp, "# Daily met: Row:%d x Col:%d ;  Lat:%f x Lon:%f\n", i, j, 
+    fprintf(ofp, "# Daily met: Row:%d x Col:%d ;  Lat:%f x Lon:%f\n", i, j,
                                                            latitude, longitude);
     fprintf(ofp, "# Data from %d-%d\n", c->start_yr_forcing, c->end_yr_forcing);
     fprintf(ofp, "# Created by Martin De Kauwe: %s", c_time_string);
@@ -1284,22 +1286,22 @@ void write_forcing_file(int i, int j, control *c, met *m, float *tmax_ij,
                sw = rad_clim_leap_ij[doy_cnt];
            else
                sw = rad_ij[jj];
-            
-            
-            /* 
-                There are a sequence (as much as 12 days, perhaps more) of bad 
-                PAR data in the AWAP data for certain pixels. If we hit one of 
+
+
+            /*
+                There are a sequence (as much as 12 days, perhaps more) of bad
+                PAR data in the AWAP data for certain pixels. If we hit one of
                 these instances we are going to infill based on the climatology.
                 Because it looks like long sequences are missing it makes no
-                sense to attempt to fill with days around the bad day I think 
+                sense to attempt to fill with days around the bad day I think
             */
             if (sw < 0.0 && ndays == 365) {
                 sw = rad_clim_nonleap_ij[doy_cnt];
             } else if (sw < 0.0 && ndays == 366) {
                 sw = rad_clim_leap_ij[doy_cnt];
             }
-            
-            
+
+
             sw_am = sw / 2.0;
             sw_pm = sw / 2.0;
             sw_w_m2 = sw * 11.574;
