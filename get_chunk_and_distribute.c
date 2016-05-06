@@ -1270,9 +1270,9 @@ void write_forcing_file(int i, int j, control *c, met *m, float *tmax_ij,
         }
     } */
     long odays = 8035;
-    int   ovars = 12;
+    int   ovars = 20;
     long  ocnt;
-    float odata[ovars * odays * NHRS];
+    float odata[ovars * odays];
 
     sprintf(ofname, "met_data_day/forcing/met_forcing_%d_%d.bin", i, j);
     ofp = fopen(ofname, "wb");
