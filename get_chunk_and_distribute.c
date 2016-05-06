@@ -1154,14 +1154,9 @@ void write_spinup_file(int i, int j, control *c, met *m, float *tmax_ij,
             estimate_diurnal_temp(tmin_ij[kk], tmax_ij[kk], day_length,
                                   &(tair[0]));
 
-            tsoil = 0.0;
-            for (hod = 0; hod < NHRS; hod++) {
-                tsoil += tair[hod];
-            }
-            tsoil /= (float)NHRS;
-
             morning_cnt = 0;
             afternoon_cnt = 0;
+            tsoil = 0.0;
             for (hod = 0; hod < NHRS; hod++) {
 
                 tsoil += tair[hod];
@@ -1379,12 +1374,8 @@ void write_forcing_file(int i, int j, control *c, met *m, float *tmax_ij,
                                   &(tair[0]));
 
 
-            tsoil = 0.0;
-            for (hod = 0; hod < NHRS; hod++) {
-                tsoil += tair[hod];
-            }
-            tsoil /= (float)NHRS;
 
+            tsoil = 0.0;
             for (hod = 0; hod < NHRS; hod++) {
 
                 tsoil += tair[hod];
