@@ -20,6 +20,18 @@
 #define MIN(a,b) (((a) < (b)) ? (a) : (b))
 #define MAX(a,b) (((a) > (b)) ? (a) : (b))
 
+#define SW_2_PAR 2.3
+#define MJ_TO_J 1E6
+#define SEC_2_DAY 86400.0
+#define DAY_2_SEC 1.0 / SEC_2_DAY
+#define J_TO_UMOL 4.57
+#define UMOL_TO_J 1.0 / J_TO_UMOL
+#define J_TO_MJ 1E-6
+#define hPa_2_kPa 0.1
+#define DEG_TO_KELVIN 273.15
+#define SEC_2_HFHR 1800.0
+#define NHRS 48
+#define HLFHR_2_SEC 1.0 / 1800.0
 
 
 typedef struct  {
@@ -50,6 +62,8 @@ typedef struct  {
     int    end_yr_forcing;
     int    start_yr_rad;
     int    end_yr_rad;
+    int    start_yr_all;
+    int    end_yr_all;
     char   fdir[STRING_LENGTH];
 } control;
 
@@ -89,14 +103,24 @@ void   get_data(control *, char *, int, float **, int **, int *);
 int    distribute_ij(control *, int *, int **);
 int    distribute(control *, int *, float *, float **, int, int);
 void   build_radiation_clim(control *, int *, float *, float **, float **);
-void write_spinup_file(int, int, control *, met *, float *, float *,
-                       float *, float *, float *, float *, float *);
-void write_forcing_file(int, int, control *, met *, float *, float *,
-                        float *, float *, float *, float *, float *, float *);
-
-
-
+void   write_spinup_file(int, int, control *, met *, float *, float *,
+                        float *, float *, float *, float *, float *);
+void   write_forcing_file(int, int, control *, met *, float *, float *,
+                          float *, float *, float *, float *, float *, float *);
+void   estimate_dirunal_par(float, float, int, float, float *);
+void   disaggregate_rainfall(float, float *rain);
+void   estimate_diurnal_temp(float, float, float, float *);
+void   estimate_diurnal_vph(float, float, float, float, float *);
+int    rand_int(unsigned int, unsigned int);
 float  calc_day_length(int, int, float);
-void   calc_tam_tpm(float *, float *, float, float, float, float);
 float  calc_vpd(float, float);
 int    is_leap_year(int);
+float  spitters(int, float, float *);
+float  day_angle(int);
+float  calculate_solar_declination(int, float);
+float  calculate_eqn_of_time(float);
+float  calculate_solar_noon(float, float);
+float  calculate_hour_angle(float, float);
+float  calc_extra_terrestrial_rad(int, float);
+float  round_to_value(float, float);
+void   calculate_solar_geometry(int, float, float, float *);
