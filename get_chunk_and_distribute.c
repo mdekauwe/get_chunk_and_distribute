@@ -1073,7 +1073,7 @@ void write_spinup_file(int i, int j, control *c, met *m, float *tmax_ij,
     long  ocnt;
     float odata[ovars * odays];
 
-    sprintf(ofname, "met_data/spinup/met_spinup_%d_%d.bin", i, j);
+    sprintf(ofname, "met_data_day/spinup/met_spinup_%d_%d.bin", i, j);
     ofp = fopen(ofname, "wb");
     if (ofp == NULL) {
         fprintf(stderr, "Error opening file for write\n");
@@ -1082,7 +1082,7 @@ void write_spinup_file(int i, int j, control *c, met *m, float *tmax_ij,
     latitude = c->yurcorner - (i * c->cellsize);
     longitude = c->xllcorner + (j * c->cellsize);
 
-    /*sprintf(ofname, "met_data/spinup/met_spinup_%d_%d.csv", i, j);
+    /*sprintf(ofname, "met_data_day/spinup/met_spinup_%d_%d.csv", i, j);
     ofp = fopen(ofname, "wb");
     current_time = time(NULL);
     c_time_string = ctime(&current_time);
@@ -1274,7 +1274,7 @@ void write_forcing_file(int i, int j, control *c, met *m, float *tmax_ij,
     long  ocnt;
     float odata[ovars * odays * NHRS];
 
-    sprintf(ofname, "met_data/forcing/met_forcing_%d_%d.bin", i, j);
+    sprintf(ofname, "met_data_day/forcing/met_forcing_%d_%d.bin", i, j);
     ofp = fopen(ofname, "wb");
     if (ofp == NULL) {
         fprintf(stderr, "Error opening file for write\n");
@@ -1284,7 +1284,7 @@ void write_forcing_file(int i, int j, control *c, met *m, float *tmax_ij,
     longitude = c->xllcorner + (j * c->cellsize);
 
     /*
-    sprintf(ofname, "met_data/forcing/met_forcing_%d_%d.csv", i, j);
+    sprintf(ofname, "met_data_day/forcing/met_forcing_%d_%d.csv", i, j);
     ofp = fopen(ofname, "wb");
 
 
