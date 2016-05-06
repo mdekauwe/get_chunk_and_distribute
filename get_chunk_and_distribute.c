@@ -1376,6 +1376,8 @@ void write_forcing_file(int i, int j, control *c, met *m, float *tmax_ij,
 
 
             tsoil = 0.0;
+            morning_cnt = 0;
+            afternoon_cnt = 0;
             for (hod = 0; hod < NHRS; hod++) {
 
                 tsoil += tair[hod];
