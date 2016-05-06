@@ -1213,7 +1213,7 @@ void write_spinup_file(int i, int j, control *c, met *m, float *tmax_ij,
             odata[ocnt+19] = par_pm;
 
             ocnt += ovars;
-
+            doy_cnt++;
         }
 
     }
