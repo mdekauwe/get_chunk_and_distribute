@@ -1150,13 +1150,20 @@ void write_spinup_file(int i, int j, control *c, met *m, float *tmax_ij,
             estimate_dirunal_par(latitude, longitude, doy_cnt+1, sw, &(par[0]));
             estimate_diurnal_vph(vph09_ij[kk], vph15_ij[kk], vph09_tomorrow,
                                  vph15_yesterday, &(vph[0]));
-            disaggregate_rainfall(rain_ij[kk], &(rain[0]));
+            /*disaggregate_rainfall(rain_ij[kk], &(rain[0]));*/
             estimate_diurnal_temp(tmin_ij[kk], tmax_ij[kk], day_length,
                                   &(tair[0]));
 
             morning_cnt = 0;
             afternoon_cnt = 0;
             tsoil = 0.0;
+            tair_am = 0.0;
+            tair_pm = 0.0;
+            tair_daylight = 0.0;
+            vpd_am = 0.0;
+            vpd_pm = 0.0;
+            par_am = 0.0;
+            par_pm = 0.0;
             for (hod = 0; hod < NHRS; hod++) {
 
                 tsoil += tair[hod];
@@ -1369,15 +1376,22 @@ void write_forcing_file(int i, int j, control *c, met *m, float *tmax_ij,
             estimate_dirunal_par(latitude, longitude, doy_cnt+1, sw, &(par[0]));
             estimate_diurnal_vph(vph09_ij[kk], vph15_ij[kk], vph09_tomorrow,
                                  vph15_yesterday, &(vph[0]));
-            disaggregate_rainfall(rain_ij[kk], &(rain[0]));
+            /*disaggregate_rainfall(rain_ij[kk], &(rain[0]));*/
             estimate_diurnal_temp(tmin_ij[kk], tmax_ij[kk], day_length,
                                   &(tair[0]));
 
 
 
-            tsoil = 0.0;
             morning_cnt = 0;
             afternoon_cnt = 0;
+            tsoil = 0.0;
+            tair_am = 0.0;
+            tair_pm = 0.0;
+            tair_daylight = 0.0;
+            vpd_am = 0.0;
+            vpd_pm = 0.0;
+            par_am = 0.0;
+            par_pm = 0.0;
             for (hod = 0; hod < NHRS; hod++) {
 
                 tsoil += tair[hod];
