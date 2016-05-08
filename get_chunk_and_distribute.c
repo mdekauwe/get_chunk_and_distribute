@@ -1045,7 +1045,7 @@ void write_spinup_file(int i, int j, control *c, met *m, float *tmax_ij,
     float tsoil=0.0;
     float sw=0.0, day_length;
     float vph09_tomorrow, vph15_yesterday;
-    float vph[NHRS], rain[NHRS], tair[NHRS], par[NHRS];
+    float vph[NHRS], tair[NHRS], par[NHRS];
     float tair_daylight, tair_am, tair_pm, vpd_am, vpd_pm, par_am, par_pm;
 
     /*
@@ -1254,7 +1254,7 @@ void write_forcing_file(int i, int j, control *c, met *m, float *tmax_ij,
     float tsoil=0.0, vpd=0.0;
     float sw=0.0, day_length;
     float vph09_tomorrow, vph15_yesterday;
-    float vph[NHRS], rain[NHRS], tair[NHRS], par[NHRS];
+    float vph[NHRS], tair[NHRS], par[NHRS];
     float tair_daylight, tair_am, tair_pm, vpd_am, vpd_pm, par_am, par_pm;
     /* 1990-2011 */
     float co2[] = {352.97, 354.37, 355.33, 356.0, 357.68, 359.837, 361.462,
