@@ -1097,7 +1097,7 @@ void write_spinup_file(int i, int j, control *c, met *m, float *tmax_ij,
     */
 
     co2 = 350.0;        /* spin up using pre 1990 value (1989 = 351.69 */
-    ndep = -9999.9;
+    ndep = -999.9;
     wind = 3.0; /* Haverd et al. 2012 */
     press = 100.0; /* 1000 mb -> kPa, Haverd et al. 2012 */
 
@@ -1303,7 +1303,7 @@ void write_forcing_file(int i, int j, control *c, met *m, float *tmax_ij,
     fprintf(ofp, "#year,doy,hod,rain,par,tair,tsoil,vpd,co2,ndep,wind,press\n");
     */
 
-    ndep = -9999.9;
+    ndep = -999.9;
     wind = 3.0; /* Haverd et al. 2012 */
     press = 100.0; /* 1000 mb -> kPa, Haverd et al. 2012 */
 
