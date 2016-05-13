@@ -1221,7 +1221,7 @@ void write_spinup_file(int i, int j, control *c, met *m, float *tmax_ij,
             odata[ocnt+18] = par_am;
             odata[ocnt+19] = par_pm;
 
-            printf("%d %d %d %f %f\n", i, j, ocnt, (float)year, (float)doy_cnt+1)
+            printf("%d %d %d %f %f\n", i, j, ocnt, (float)year, (float)doy_cnt+1);
             ocnt += ovars;
             doy_cnt++;
         }
