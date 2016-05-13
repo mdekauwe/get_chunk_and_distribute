@@ -1284,10 +1284,10 @@ void write_forcing_file(int i, int j, control *c, met *m, float *tmax_ij,
             odays += 365;
         }
     } */
-    long odays = 8035;
+    long  odays = 8035;
     int   ovars = 20;
     long  ocnt;
-    float odata[ovars * odays];
+    float odata[ovars * odays* 20];
 
     sprintf(ofname, "met_data_day/forcing/met_forcing_%d_%d.bin", i, j);
     ofp = fopen(ofname, "wb");
@@ -1484,7 +1484,7 @@ void write_forcing_file(int i, int j, control *c, met *m, float *tmax_ij,
             ocnt += ovars;
             doy_cnt++;
             jj++;
-            printf("** %d %d %d %d %f %f\n", i, j, ocnt, ovars * odays, (float)year, (float)doy_cnt+1);
+            printf("** %d %d %d %d %d %f %f\n", i, j, ocnt, 160700, ovars * odays, (float)year, (float)doy_cnt+1);
 
         }
         co2_index++;
