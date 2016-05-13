@@ -1230,7 +1230,7 @@ void write_spinup_file(int i, int j, control *c, met *m, float *tmax_ij,
 
             ocnt += ovars;
             doy_cnt++;
-            printf("* %ld %f %f\n", ocnt, (float)year; (float)doy_cnt+1);
+            printf("* %ld %f %f\n", ocnt, (float)year, (float)doy_cnt+1);
         }
 
     }
@@ -1472,7 +1472,7 @@ void write_forcing_file(int i, int j, control *c, met *m, float *tmax_ij,
             odata[ocnt+19] = par_pm;
 
             ocnt += ovars;
-            printf("** %ld %f %f\n", ocnt, (float)year; (float)doy_cnt+1);
+            printf("** %ld %f %f\n", ocnt, (float)year, (float)doy_cnt+1);
             doy_cnt++;
             jj++;
         }
