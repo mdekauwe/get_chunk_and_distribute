@@ -1448,6 +1448,7 @@ void write_forcing_file(int i, int j, control *c, met *m, float *tmax_ij,
 
                     afternoon_cnt++;
                 }
+                printf("*** %d %d %d\n", i, j, hod);
             }
 
             tair_daylight /= (float)(morning_cnt + afternoon_cnt);
@@ -1484,6 +1485,8 @@ void write_forcing_file(int i, int j, control *c, met *m, float *tmax_ij,
             ocnt += ovars;
             doy_cnt++;
             jj++;
+            printf("**** %d %d %d %d %f %f\n", i, j, ocnt, ovars * odays, (float)year, (float)doy_cnt+1);
+
         }
         co2_index++;
     }
