@@ -1211,7 +1211,7 @@ void write_spinup_file(int i, int j, control *c, met *m, float *tmax_ij,
             odata[ocnt] = (float)year;
             odata[ocnt+1] = (float)doy_cnt+1;
             odata[ocnt+2] = tair_daylight;
-            odata[ocnt+3] = -200.0/*rain_ij[kk];*/
+            odata[ocnt+3] = -200.0;/*rain_ij[kk];*/
             odata[ocnt+4] = tsoil;
             odata[ocnt+5] = tair_am;
             odata[ocnt+6] = tair_pm;
@@ -1461,7 +1461,7 @@ void write_forcing_file(int i, int j, control *c, met *m, float *tmax_ij,
             odata[ocnt] = (float)year;
             odata[ocnt+1] = (float)doy_cnt+1;
             odata[ocnt+2] = tair_daylight;
-            odata[ocnt+3] = -200.0/*rain_ij[kk];*/
+            odata[ocnt+3] = -200.0;/*rain_ij[kk];*/
             odata[ocnt+4] = tsoil;
             odata[ocnt+5] = tair_am;
             odata[ocnt+6] = tair_pm;
