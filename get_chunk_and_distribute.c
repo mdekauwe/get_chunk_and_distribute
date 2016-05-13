@@ -1038,15 +1038,15 @@ void write_spinup_file(int i, int j, control *c, met *m, float *tmax_ij,
     time_t current_time;
     char*  c_time_string;
     FILE  *ofp;
-    long  date_offset;
-    int   doy_cnt, morning_cnt, afternoon_cnt;
-    int   k=0, kk, yr_to_get, st_idx, en_idx, ndays, year, hod;
-    float co2=0.0, ndep=0.0, wind=0.0, press=0.0;
-    float tsoil=0.0;
-    float sw=0.0, day_length;
-    float vph09_tomorrow, vph15_yesterday;
-    float vph[NHRS], tair[NHRS], par[NHRS];
-    float tair_daylight, tair_am, tair_pm, vpd_am, vpd_pm, par_am, par_pm;
+    long   date_offset;
+    int    doy_cnt, morning_cnt, afternoon_cnt;
+    int    k=0, kk, yr_to_get, st_idx, en_idx, ndays, year, hod;
+    float  co2=0.0, ndep=0.0, wind=0.0, press=0.0;
+    float  tsoil=0.0;
+    float  sw=0.0, day_length;
+    float  vph09_tomorrow, vph15_yesterday;
+    float  vph[NHRS], tair[NHRS], par[NHRS];
+    float  tair_daylight, tair_am, tair_pm, vpd_am, vpd_pm, par_am, par_pm;
 
     /*
         this sequence of years was randomly generated outside of the code
@@ -1068,7 +1068,7 @@ void write_spinup_file(int i, int j, control *c, met *m, float *tmax_ij,
             odays += 365;
         }
     }*/
-    long odays = 10958;
+    long  odays = 10958;
     int   ovars = 20;
     long  ocnt;
     float odata[ovars * odays];
@@ -1193,8 +1193,8 @@ void write_spinup_file(int i, int j, control *c, met *m, float *tmax_ij,
             tair_pm /= (float)afternoon_cnt;
             vpd_am /= (float)morning_cnt;
             vpd_pm /= (float)afternoon_cnt;
-            par_am /= (float)morning_cnt;
-            par_pm /= (float)afternoon_cnt;
+            /*par_am /= (float)morning_cnt;
+            par_pm /= (float)afternoon_cnt;*/
             tsoil /= (float)NHRS;
 
             /* save everything and do a single big dump at the end */
@@ -1221,6 +1221,7 @@ void write_spinup_file(int i, int j, control *c, met *m, float *tmax_ij,
 
             ocnt += ovars;
             doy_cnt++;
+            printf("%ld\n", ocnt);
         }
 
     }
