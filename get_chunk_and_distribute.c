@@ -279,10 +279,13 @@ int main(int argc, char **argv)
         write_spinup_file(i, j, c, m, tmax_ij, tmin_ij, rain_ij, vph09_ij,
                           vph15_ij, rad_clim_nonleap_ij, rad_clim_leap_ij);
 
+        printf("finished writint spinup\n");
+
         /* forcing using 1990-2011 data */
         write_forcing_file(i, j, c, m, tmax_ij, tmin_ij, rain_ij,
                            vph09_ij, vph15_ij, rad_ij, rad_clim_nonleap_ij,
                            rad_clim_leap_ij);
+        printf("finished writint forcing\n");
     }
 
 
@@ -413,7 +416,7 @@ void read_met_data_slice(control *c, met *m, int *land_ij) {
             total_days += 365;
         }
     }
-    printf("%d\n", total_days);
+
     /*
         Count the number of days to size arrays
         For the Rad data the timeseries is shorter, 1990-2011, as opposed to
@@ -1227,7 +1230,7 @@ void write_spinup_file(int i, int j, control *c, met *m, float *tmax_ij,
 
             ocnt += ovars;
             doy_cnt++;
-            printf("%ld\n", ocnt);
+            printf("* %ld %f %f\n", ocnt, (float)year; (float)doy_cnt+1);
         }
 
     }
@@ -1469,7 +1472,7 @@ void write_forcing_file(int i, int j, control *c, met *m, float *tmax_ij,
             odata[ocnt+19] = par_pm;
 
             ocnt += ovars;
-
+            printf("** %ld %f %f\n", ocnt, (float)year; (float)doy_cnt+1);
             doy_cnt++;
             jj++;
         }
