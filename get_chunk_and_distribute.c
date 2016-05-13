@@ -1337,12 +1337,13 @@ void write_forcing_file(int i, int j, control *c, met *m, float *tmax_ij,
                 } else {
                     ndays = 365;
                 }
-
+                printf("%d %d\n", (int)yr_to_get, ndays);
                 en_idx = kk + ndays;
                 break;
             }
             date_offset+=3;
         }
+
 
         /* Need to do the same thing for the rad data - remember array
            length is shorter */
