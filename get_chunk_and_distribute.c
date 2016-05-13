@@ -152,8 +152,9 @@ int main(int argc, char **argv)
     /* elements remaining after division among processors */
     c->remainder = c->num_land_pixels - (c->nsize * c->size);
 
-    read_met_data_slice(c, m, land_ij);
 
+    read_met_data_slice(c, m, land_ij);
+    printf("read met data...\n");
     /* divide the met data in i,j pairs between processors */
     npairs = distribute_ij(c, land_ij, &pairs);
 
@@ -269,6 +270,7 @@ int main(int argc, char **argv)
         build_radiation_clim(c, m->rad_dates, rad_ij, &rad_clim_nonleap_ij,
                              &rad_clim_leap_ij);
 
+        printf("write_spinup_file ...\n");
         /* Spin up using 1960-1990 data */
         write_spinup_file(i, j, c, m, tmax_ij, tmin_ij, rain_ij, vph09_ij,
                           vph15_ij, rad_clim_nonleap_ij, rad_clim_leap_ij);
@@ -1038,15 +1040,16 @@ void write_spinup_file(int i, int j, control *c, met *m, float *tmax_ij,
     time_t current_time;
     char*  c_time_string;
     FILE  *ofp;
-    long   date_offset;
-    int    doy_cnt, morning_cnt, afternoon_cnt;
-    int    k=0, kk, yr_to_get, st_idx, en_idx, ndays, year, hod;
-    float  co2=0.0, ndep=0.0, wind=0.0, press=0.0;
-    float  tsoil=0.0;
-    float  sw=0.0, day_length;
-    float  vph09_tomorrow, vph15_yesterday;
-    float  vph[NHRS], tair[NHRS], par[NHRS];
-    float  tair_daylight, tair_am, tair_pm, vpd_am, vpd_pm, par_am, par_pm;
+    long  date_offset;
+    int   doy_cnt;
+    int   k=0, kk, yr_to_get, st_idx, en_idx, ndays, year;
+    float co2=0.0, ndep=0.0, wind=0.0, press=0.0, wind_am=0.0;
+    float wind_pm=0.0, vpd_avg=0.0, par_day=0.0, sw_am=0.0;
+    float Tmean=0.0, Tsoil=0.0, vpd_am=0.0, vpd_pm=0.0;
+    float sw_pm=0.0, sw=0.0, rainfall=0.0, day_length;
+    float tmin_tomorrow;
+    float Tam, Tpm, SEC_TO_DAY, Tavg, sw_w_m2;
+
 
     /*
         this sequence of years was randomly generated outside of the code
@@ -1101,7 +1104,6 @@ void write_spinup_file(int i, int j, control *c, met *m, float *tmax_ij,
     wind = 3.0; /* Haverd et al. 2012 */
     press = 100.0; /* 1000 mb -> kPa, Haverd et al. 2012 */
 
-    ocnt = 0;
     for (k = 0; k < len_shuffled_yrs; k++) {
         yr_to_get = shuffled_yrs[k];
         st_idx = -999;
@@ -1127,101 +1129,52 @@ void write_spinup_file(int i, int j, control *c, met *m, float *tmax_ij,
         for (kk = st_idx; kk < en_idx; kk++) {
             /*printf("**%d %d\n", st_idx, en_idx);*/
             day_length = calc_day_length(kk, ndays, latitude);
+            if (kk+1 > en_idx)
+                tmin_tomorrow = tmin_ij[kk];
+            else
+                tmin_tomorrow = tmin_ij[kk+1];
 
-            if (kk+1 > en_idx) {
-                vph09_tomorrow = vph09_ij[kk];
-            } else {
-                vph09_tomorrow = vph09_ij[kk+1];
-            }
+            calc_tam_tpm(&Tam, &Tpm, tmin_ij[kk], tmin_tomorrow,
+                         tmax_ij[kk], day_length);
 
-            if (kk == st_idx) {
-                vph15_yesterday = vph15_ij[kk];
-            } else {
-                vph15_yesterday = vph15_ij[kk-1];
-            }
+            Tavg = (tmin_ij[kk] + tmax_ij[kk]) / 2.0;
+            Tsoil = Tavg;
 
-
-            /* dissagregate drivers */
+            /*
+            1 MJ m-2 d-1 = 1000000 J m-2 d-1 / 86400 s d-1
+                           = 11.574 J m-2 s-1
+                           = 11.574 W m-2
+            */
             if (ndays == 365)
                 sw = rad_clim_nonleap_ij[doy_cnt];
             else
                 sw = rad_clim_leap_ij[doy_cnt];
 
-            estimate_dirunal_par(latitude, longitude, doy_cnt+1, sw, &(par[0]));
-            estimate_diurnal_vph(vph09_ij[kk], vph15_ij[kk], vph09_tomorrow,
-                                 vph15_yesterday, &(vph[0]));
-            /*disaggregate_rainfall(rain_ij[kk], &(rain[0]));*/
-            estimate_diurnal_temp(tmin_ij[kk], tmax_ij[kk], day_length,
-                                  &(tair[0]));
 
-            morning_cnt = 0;
-            afternoon_cnt = 0;
-            tsoil = 0.0;
-            tair_am = 0.0;
-            tair_pm = 0.0;
-            tair_daylight = 0.0;
-            vpd_am = 0.0;
-            vpd_pm = 0.0;
-            par_am = 0.0;
-            par_pm = 0.0;
-            for (hod = 0; hod < NHRS; hod++) {
+             /* save everything and do a single big dump at the end */
+             odata[ocnt] = (float)year;
+             odata[ocnt+1] = (float)doy_cnt+1;
+             odata[ocnt+2] = Tavg;
+             odata[ocnt+3] = rainfall;
+             odata[ocnt+4] = Tsoil;
+             odata[ocnt+5] = Tam;
+             odata[ocnt+6] = Tpm;
+             odata[ocnt+7] = -999.9; /* we are not using phenology so tmin does not matter */
+             odata[ocnt+8] = -999.9; /* we are not using phenology so tmax does not matter */
+             odata[ocnt+9] = -999.9; /* we are not using phenology so tmax does not matter */
+             odata[ocnt+10] = calc_vpd(Tam, vph09_ij[kk]);
+             odata[ocnt+11] = calc_vpd(Tpm, vph15_ij[kk]);
+             odata[ocnt+12] = co2;
+             odata[ocnt+13] = ndep;
+             odata[ocnt+14] = wind;
+             odata[ocnt+15] = press;
+             odata[ocnt+16] = wind;
+             odata[ocnt+17] = wind;
+             odata[ocnt+18] = (sw / 2.0) * MJ_TO_J / (day_length / 2.0 * 60. * 60.) * J_TO_UMOL;
+             odata[ocnt+19] = (sw / 2.0) * MJ_TO_J / (day_length / 2.0 * 60. * 60.) * J_TO_UMOL;
 
-                tsoil += tair[hod];
-
-                /* morning */
-                if (hod <= 23 && par[hod] > 5.0) {
-                    tair_daylight += tair[hod];
-                    tair_am += tair[hod];
-                    vpd_am += calc_vpd(tair[hod], vph[hod]);
-                    par_am += par[hod];
-
-                    morning_cnt++;
-
-                /* afternoon */
-                } else if (hod >= 24 && par[hod] > 5.0) {
-                    tair_daylight += tair[hod];
-                    tair_pm += tair[hod];
-                    vpd_pm += calc_vpd(tair[hod], vph[hod]);
-                    par_pm += par[hod];
-
-                    afternoon_cnt++;
-                }
-            }
-
-            tair_daylight /= (float)(morning_cnt + afternoon_cnt);
-            tair_am /= (float)morning_cnt;
-            tair_pm /= (float)afternoon_cnt;
-            vpd_am /= (float)morning_cnt;
-            vpd_pm /= (float)afternoon_cnt;
-            /*par_am /= (float)morning_cnt;
-            par_pm /= (float)afternoon_cnt;*/
-            tsoil /= (float)NHRS;
-
-            /* save everything and do a single big dump at the end */
-            odata[ocnt] = (float)year;
-            odata[ocnt+1] = (float)doy_cnt+1;
-            odata[ocnt+2] = tair_daylight;
-            odata[ocnt+3] = rain_ij[kk];
-            odata[ocnt+4] = tsoil;
-            odata[ocnt+5] = tair_am;
-            odata[ocnt+6] = tair_pm;
-            odata[ocnt+7] = -999.9; /* we are not using phenology so tmin does not matter */
-            odata[ocnt+8] = -999.9; /* we are not using phenology so tmax does not matter */
-            odata[ocnt+9] = -999.9; /* we are not using phenology so tmax does not matter */
-            odata[ocnt+10] = vpd_am;
-            odata[ocnt+11] = vpd_pm;
-            odata[ocnt+12] = co2;
-            odata[ocnt+13] = ndep;
-            odata[ocnt+14] = wind;
-            odata[ocnt+15] = press;
-            odata[ocnt+16] = wind;
-            odata[ocnt+17] = wind;
-            odata[ocnt+18] = par_am;
-            odata[ocnt+19] = par_pm;
-
-            ocnt += ovars;
-            doy_cnt++;
-            printf("%ld\n", ocnt);
+             ocnt += ovars;
+             doy_cnt++;
         }
 
     }
@@ -1234,8 +1187,10 @@ void write_spinup_file(int i, int j, control *c, met *m, float *tmax_ij,
     fclose(ofp);
     free(odata);
 
+
     return;
 }
+
 
 void write_forcing_file(int i, int j, control *c, met *m, float *tmax_ij,
                         float *tmin_ij, float *rain_ij, float *vph09_ij,
@@ -1253,10 +1208,12 @@ void write_forcing_file(int i, int j, control *c, met *m, float *tmax_ij,
     int st_idx_rad, co2_index;
     float ndep=0.0, wind=0.0, press=0.0;
     float tsoil=0.0, vpd=0.0;
-    float sw=0.0, day_length;
+    float sw=0.0, day_length, tmin_tomorrow;
     float vph09_tomorrow, vph15_yesterday;
     float vph[NHRS], tair[NHRS], par[NHRS];
     float tair_daylight, tair_am, tair_pm, vpd_am, vpd_pm, par_am, par_pm;
+    float Tam, Tpm, Tavg, Tsoil, rainfall;
+
     /* 1990-2011 */
     float co2[] = {352.97, 354.37, 355.33, 356.0, 357.68, 359.837, 361.462,
                    363.155, 365.322, 367.348, 368.865, 370.467, 372.522,
@@ -1353,18 +1310,15 @@ void write_forcing_file(int i, int j, control *c, met *m, float *tmax_ij,
             /*printf("%d/%d/%d\n", years[kk], months[kk], days[kk]);*/
             day_length = calc_day_length(kk, ndays, latitude);
 
-            if (kk+1 > en_idx) {
-                vph09_tomorrow = vph09_ij[kk];
-            } else {
-                vph09_tomorrow = vph09_ij[kk+1];
-            }
+            if (kk+1 > en_idx)
+                tmin_tomorrow = tmin_ij[kk];
+            else
+                tmin_tomorrow = tmin_ij[kk+1];
 
-            if (kk == st_idx) {
-                vph15_yesterday = vph15_ij[kk];
-            } else {
-                vph15_yesterday = vph15_ij[kk-1];
-            }
-
+            calc_tam_tpm(&Tam, &Tpm, tmin_ij[kk], tmin_tomorrow,
+                         tmax_ij[kk], day_length);
+            Tavg = (tmin_ij[kk] + tmax_ij[kk]) / 2.0;
+            Tsoil = Tavg;
 
             /* dissagregate drivers */
             if (year < 1990 && ndays == 365)
@@ -1374,93 +1328,40 @@ void write_forcing_file(int i, int j, control *c, met *m, float *tmax_ij,
             else
                 sw = rad_ij[jj];
 
-            estimate_dirunal_par(latitude, longitude, doy_cnt+1, sw, &(par[0]));
-            estimate_diurnal_vph(vph09_ij[kk], vph15_ij[kk], vph09_tomorrow,
-                                 vph15_yesterday, &(vph[0]));
-            /*disaggregate_rainfall(rain_ij[kk], &(rain[0]));*/
-            estimate_diurnal_temp(tmin_ij[kk], tmax_ij[kk], day_length,
-                                  &(tair[0]));
-
-
-
-            morning_cnt = 0;
-            afternoon_cnt = 0;
-            tsoil = 0.0;
-            tair_am = 0.0;
-            tair_pm = 0.0;
-            tair_daylight = 0.0;
-            vpd_am = 0.0;
-            vpd_pm = 0.0;
-            par_am = 0.0;
-            par_pm = 0.0;
-            for (hod = 0; hod < NHRS; hod++) {
-
-                tsoil += tair[hod];
-
-                /*
-                ** There are a sequence (as much as 12 days, perhaps more) of
-                ** bad PAR data in the AWAP data for certain pixels. If we hit
-                ** one of these instances we are going to infill based on the
-                ** climatology. Because it looks like long sequences are
-                ** missing it makes nosense to attempt to fill with days
-                ** around the bad day I think
-                */
-                if (par[hod] < 0.0 && ndays == 365) {
-                    par[hod] = rad_clim_nonleap_ij[doy_cnt] * SW_2_PAR;
-                } else if (sw < 0.0 && ndays == 366) {
-                    par[hod] = rad_clim_leap_ij[doy_cnt] * SW_2_PAR;
-                }
-
-                /* morning */
-                if (hod <= 23 && par[hod] > 5.0) {
-                    tair_daylight += tair[hod];
-                    tair_am += tair[hod];
-                    vpd_am += calc_vpd(tair[hod], vph[hod]);
-                    par_am += par[hod];
-
-                    morning_cnt++;
-
-                /* afternoon */
-                } else if (hod >= 24 && par[hod] > 5.0) {
-                    tair_daylight += tair[hod];
-                    tair_pm += tair[hod];
-                    vpd_pm += calc_vpd(tair[hod], vph[hod]);
-                    par_pm += par[hod];
-
-                    afternoon_cnt++;
-                }
+            /*
+                There are a sequence (as much as 12 days, perhaps more) of bad
+                PAR data in the AWAP data for certain pixels. If we hit one of
+                these instances we are going to infill based on the climatology.
+                Because it looks like long sequences are missing it makes no
+                sense to attempt to fill with days around the bad day I think
+            */
+            if (sw < 0.0 && ndays == 365) {
+                sw = rad_clim_nonleap_ij[doy_cnt];
+            } else if (sw < 0.0 && ndays == 366) {
+                sw = rad_clim_leap_ij[doy_cnt];
             }
-
-            tair_daylight /= (float)(morning_cnt + afternoon_cnt);
-            tair_am /= (float)morning_cnt;
-            tair_pm /= (float)afternoon_cnt;
-            vpd_am /= (float)morning_cnt;
-            vpd_pm /= (float)afternoon_cnt;
-            par_am /= (float)morning_cnt;
-            par_pm /= (float)afternoon_cnt;
-            tsoil /= (float)NHRS;
 
             /* save everything and do a single big dump at the end */
             odata[ocnt] = (float)year;
             odata[ocnt+1] = (float)doy_cnt+1;
-            odata[ocnt+2] = tair_daylight;
-            odata[ocnt+3] = rain_ij[kk];
-            odata[ocnt+4] = tsoil;
-            odata[ocnt+5] = tair_am;
-            odata[ocnt+6] = tair_pm;
+            odata[ocnt+2] = Tavg;
+            odata[ocnt+3] = rainfall;
+            odata[ocnt+4] = Tsoil;
+            odata[ocnt+5] = Tam;
+            odata[ocnt+6] = Tpm;
             odata[ocnt+7] = -999.9; /* we are not using phenology so tmin does not matter */
             odata[ocnt+8] = -999.9; /* we are not using phenology so tmax does not matter */
             odata[ocnt+9] = -999.9; /* we are not using phenology so tmax does not matter */
-            odata[ocnt+10] = vpd_am;
-            odata[ocnt+11] = vpd_pm;
-            odata[ocnt+12] = co2[co2_index];;
+            odata[ocnt+10] = calc_vpd(Tam, vph09_ij[kk]);
+            odata[ocnt+11] = calc_vpd(Tpm, vph15_ij[kk]);
+            odata[ocnt+12] = co2[co2_index];
             odata[ocnt+13] = ndep;
             odata[ocnt+14] = wind;
             odata[ocnt+15] = press;
             odata[ocnt+16] = wind;
             odata[ocnt+17] = wind;
-            odata[ocnt+18] = par_am;
-            odata[ocnt+19] = par_pm;
+            odata[ocnt+18] = (sw / 2.0) * MJ_TO_J / (day_length / 2.0 * 60. * 60.) * J_TO_UMOL;
+            odata[ocnt+19] = (sw / 2.0) * MJ_TO_J / (day_length / 2.0 * 60. * 60.) * J_TO_UMOL;
 
             ocnt += ovars;
 

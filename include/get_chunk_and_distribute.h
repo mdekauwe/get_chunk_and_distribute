@@ -124,3 +124,4 @@ float  calculate_hour_angle(float, float);
 float  calc_extra_terrestrial_rad(int, float);
 float  round_to_value(float, float);
 void   calculate_solar_geometry(int, float, float, float *);
+void   calc_tam_tpm(float *, float *, float, float, float, float);
