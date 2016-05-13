@@ -151,11 +151,14 @@ int main(int argc, char **argv)
 
     /* elements remaining after division among processors */
     c->remainder = c->num_land_pixels - (c->nsize * c->size);
-
+    printf("Reading met data\n");
     read_met_data_slice(c, m, land_ij);
+    printf("Finshed reading met data\n");
 
+    printf("Distribute pairs\n");
     /* divide the met data in i,j pairs between processors */
     npairs = distribute_ij(c, land_ij, &pairs);
+    printf("Finshed distributing pairs\n");
 
     if (npairs < 0) {
         fprintf(stderr,"Error in distribute_ij\n");
@@ -265,9 +268,12 @@ int main(int argc, char **argv)
         }
         pixel_count++;
 
+        printf("build clim\n");
         /* Build a climatology from the radiation data 1990-2011 */
         build_radiation_clim(c, m->rad_dates, rad_ij, &rad_clim_nonleap_ij,
                              &rad_clim_leap_ij);
+
+        printf("finished building clim; make spinup\n");
 
         /* Spin up using 1960-1990 data */
         write_spinup_file(i, j, c, m, tmax_ij, tmin_ij, rain_ij, vph09_ij,
