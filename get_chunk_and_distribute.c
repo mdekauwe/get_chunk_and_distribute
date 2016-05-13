@@ -413,7 +413,7 @@ void read_met_data_slice(control *c, met *m, int *land_ij) {
             total_days += 365;
         }
     }
-
+    printf("%d\n", total_days);
     /*
         Count the number of days to size arrays
         For the Rad data the timeseries is shorter, 1990-2011, as opposed to
