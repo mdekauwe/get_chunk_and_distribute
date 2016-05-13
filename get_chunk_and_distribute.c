@@ -1229,7 +1229,7 @@ void write_spinup_file(int i, int j, control *c, met *m, float *tmax_ij,
             odata[ocnt+18] = par_am;
             odata[ocnt+19] = par_pm;
 
-            printf("** %d %d %d %d %f %f\n", i, j, ocnt, ovars * odays, (float)year, (float)doy_cnt+1);
+            /*printf("** %d %d %d %d %f %f\n", i, j, ocnt, ovars * odays, (float)year, (float)doy_cnt+1);*/
             ocnt += ovars;
             doy_cnt++;
         }
@@ -1470,7 +1470,7 @@ void write_forcing_file(int i, int j, control *c, met *m, float *tmax_ij,
             odata[ocnt+9] = -999.9; /* we are not using phenology so tmax does not matter */
             odata[ocnt+10] = vpd_am;
             odata[ocnt+11] = vpd_pm;
-            odata[ocnt+12] = co2[co2_index];;
+            odata[ocnt+12] = -200.0; /*co2[co2_index];;*/
             odata[ocnt+13] = ndep;
             odata[ocnt+14] = wind;
             odata[ocnt+15] = press;
