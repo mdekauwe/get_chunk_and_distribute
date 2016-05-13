@@ -1041,6 +1041,7 @@ void write_spinup_file(int i, int j, control *c, met *m, float *tmax_ij,
     char*  c_time_string;
     FILE  *ofp;
     long  date_offset;
+<<<<<<< HEAD
     int   doy_cnt;
     int   k=0, kk, yr_to_get, st_idx, en_idx, ndays, year;
     float co2=0.0, ndep=0.0, wind=0.0, press=0.0, wind_am=0.0;
@@ -1050,6 +1051,16 @@ void write_spinup_file(int i, int j, control *c, met *m, float *tmax_ij,
     float tmin_tomorrow;
     float Tam, Tpm, SEC_TO_DAY, Tavg, sw_w_m2;
 
+=======
+    int   doy_cnt, morning_cnt, afternoon_cnt;
+    int   k=0, kk, yr_to_get, st_idx, en_idx, ndays, year, hod;
+    float co2=0.0, ndep=0.0, wind=0.0, press=0.0;
+    float tsoil=0.0;
+    float sw=0.0, day_length;
+    float vph09_tomorrow, vph15_yesterday;
+    float vph[NHRS], tair[NHRS], par[NHRS];
+    float tair_daylight, tair_am, tair_pm, vpd_am, vpd_pm, par_am, par_pm;
+>>>>>>> parent of 241d1e3... Added cnt debug statement
 
     /*
         this sequence of years was randomly generated outside of the code
@@ -1071,7 +1082,7 @@ void write_spinup_file(int i, int j, control *c, met *m, float *tmax_ij,
             odays += 365;
         }
     }*/
-    long  odays = 10958;
+    long odays = 10958;
     int   ovars = 20;
     long  ocnt;
     float odata[ovars * odays];
@@ -1150,6 +1161,7 @@ void write_spinup_file(int i, int j, control *c, met *m, float *tmax_ij,
             else
                 sw = rad_clim_leap_ij[doy_cnt];
 
+<<<<<<< HEAD
 
              /* save everything and do a single big dump at the end */
              odata[ocnt] = (float)year;
@@ -1175,6 +1187,82 @@ void write_spinup_file(int i, int j, control *c, met *m, float *tmax_ij,
 
              ocnt += ovars;
              doy_cnt++;
+=======
+            estimate_dirunal_par(latitude, longitude, doy_cnt+1, sw, &(par[0]));
+            estimate_diurnal_vph(vph09_ij[kk], vph15_ij[kk], vph09_tomorrow,
+                                 vph15_yesterday, &(vph[0]));
+            /*disaggregate_rainfall(rain_ij[kk], &(rain[0]));*/
+            estimate_diurnal_temp(tmin_ij[kk], tmax_ij[kk], day_length,
+                                  &(tair[0]));
+
+            morning_cnt = 0;
+            afternoon_cnt = 0;
+            tsoil = 0.0;
+            tair_am = 0.0;
+            tair_pm = 0.0;
+            tair_daylight = 0.0;
+            vpd_am = 0.0;
+            vpd_pm = 0.0;
+            par_am = 0.0;
+            par_pm = 0.0;
+            for (hod = 0; hod < NHRS; hod++) {
+
+                tsoil += tair[hod];
+
+                /* morning */
+                if (hod <= 23 && par[hod] > 5.0) {
+                    tair_daylight += tair[hod];
+                    tair_am += tair[hod];
+                    vpd_am += calc_vpd(tair[hod], vph[hod]);
+                    par_am += par[hod];
+
+                    morning_cnt++;
+
+                /* afternoon */
+                } else if (hod >= 24 && par[hod] > 5.0) {
+                    tair_daylight += tair[hod];
+                    tair_pm += tair[hod];
+                    vpd_pm += calc_vpd(tair[hod], vph[hod]);
+                    par_pm += par[hod];
+
+                    afternoon_cnt++;
+                }
+            }
+
+            tair_daylight /= (float)(morning_cnt + afternoon_cnt);
+            tair_am /= (float)morning_cnt;
+            tair_pm /= (float)afternoon_cnt;
+            vpd_am /= (float)morning_cnt;
+            vpd_pm /= (float)afternoon_cnt;
+            par_am /= (float)morning_cnt;
+            par_pm /= (float)afternoon_cnt;
+            tsoil /= (float)NHRS;
+
+            /* save everything and do a single big dump at the end */
+            odata[ocnt] = (float)year;
+            odata[ocnt+1] = (float)doy_cnt+1;
+            odata[ocnt+2] = tair_daylight;
+            odata[ocnt+3] = rain_ij[kk];
+            odata[ocnt+4] = tsoil;
+            odata[ocnt+5] = tair_am;
+            odata[ocnt+6] = tair_pm;
+            odata[ocnt+7] = -999.9; /* we are not using phenology so tmin does not matter */
+            odata[ocnt+8] = -999.9; /* we are not using phenology so tmax does not matter */
+            odata[ocnt+9] = -999.9; /* we are not using phenology so tmax does not matter */
+            odata[ocnt+10] = vpd_am;
+            odata[ocnt+11] = vpd_pm;
+            odata[ocnt+12] = co2;
+            odata[ocnt+13] = ndep;
+            odata[ocnt+14] = wind;
+            odata[ocnt+15] = press;
+            odata[ocnt+16] = wind;
+            odata[ocnt+17] = wind;
+            odata[ocnt+18] = par_am;
+            odata[ocnt+19] = par_pm;
+
+            ocnt += ovars;
+            doy_cnt++;
+>>>>>>> parent of 241d1e3... Added cnt debug statement
         }
 
     }
