@@ -1210,7 +1210,7 @@ void write_spinup_file(int i, int j, control *c, met *m, float *tmax_ij,
             odata[ocnt] = (float)year;
             odata[ocnt+1] = (float)doy_cnt+1;
             odata[ocnt+2] = tair_daylight;
-            odata[ocnt+3] = -200.0;/*rain_ij[kk];*/
+            odata[ocnt+3] = rain_ij[kk];
             odata[ocnt+4] = tsoil;
             odata[ocnt+5] = tair_am;
             odata[ocnt+6] = tair_pm;
@@ -1338,7 +1338,7 @@ void write_forcing_file(int i, int j, control *c, met *m, float *tmax_ij,
                 } else {
                     ndays = 365;
                 }
-                printf("%d %d\n", (int)yr_to_get, ndays);
+                
                 en_idx = kk + ndays;
                 break;
             }
@@ -1465,7 +1465,7 @@ void write_forcing_file(int i, int j, control *c, met *m, float *tmax_ij,
             odata[ocnt] = (float)year;
             odata[ocnt+1] = (float)doy_cnt+1;
             odata[ocnt+2] = tair_daylight;
-            odata[ocnt+3] = -200.0;/*rain_ij[kk];*/
+            odata[ocnt+3] = rain_ij[kk];
             odata[ocnt+4] = tsoil;
             odata[ocnt+5] = tair_am;
             odata[ocnt+6] = tair_pm;
@@ -1474,7 +1474,7 @@ void write_forcing_file(int i, int j, control *c, met *m, float *tmax_ij,
             odata[ocnt+9] = -999.9; /* we are not using phenology so tmax does not matter */
             odata[ocnt+10] = vpd_am;
             odata[ocnt+11] = vpd_pm;
-            odata[ocnt+12] = -200.0; /*co2[co2_index];;*/
+            odata[ocnt+12] = co2[co2_index];
             odata[ocnt+13] = ndep;
             odata[ocnt+14] = wind;
             odata[ocnt+15] = press;
