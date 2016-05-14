@@ -1232,19 +1232,20 @@ void write_spinup_file(int i, int j, control *c, met *m, float *tmax_ij,
             ocnt += ovars;
             doy_cnt++;
 
-            printf("* %d %d %d %d %f %f\n", i, j, ocnt, ovars * odays, (float)year, (float)doy_cnt);
+            /*printf("* %d %d %d %d %f %f\n", i, j, ocnt, ovars * odays, (float)year, (float)doy_cnt);*/
         }
 
     }
-
+    printf("S About to write file\n");
     if (fwrite(odata, sizeof(float), ovars * odays, ofp) != ovars * odays) {
         fprintf(stderr, "Error writing spinup file\n");
 	    exit(EXIT_FAILURE);
     }
+    printf("S Written the file\n");
 
     fclose(ofp);
-    free(odata);
     printf("S %d %d file written\n", i, j);
+
 
     return;
 }
@@ -1287,7 +1288,7 @@ void write_forcing_file(int i, int j, control *c, met *m, float *tmax_ij,
     long  odays = 8035;
     int   ovars = 20;
     long  ocnt;
-    float odata[ovars * odays* 20];
+    float odata[ovars * odays];
 
     sprintf(ofname, "met_data_day/forcing/met_forcing_%d_%d.bin", i, j);
     ofp = fopen(ofname, "wb");
@@ -1485,20 +1486,19 @@ void write_forcing_file(int i, int j, control *c, met *m, float *tmax_ij,
             ocnt += ovars;
             doy_cnt++;
             jj++;
-            printf("** %d %d %d %d %d %f %f\n", i, j, ocnt, 160700, ovars * odays, (float)year, (float)doy_cnt);
+            /*printf("** %d %d %d %d %d %f %f\n", i, j, ocnt, 160700, ovars * odays, (float)year, (float)doy_cnt);*/
 
         }
         co2_index++;
     }
-    printf("About to write file\n");
+    printf("F About to write file\n");
     if (fwrite(odata, sizeof(float), ovars * odays, ofp) != ovars * odays) {
 	   fprintf(stderr, "Error writing forcing file\n");
 	   exit(EXIT_FAILURE);
     }
-    printf("Written the file\n");
+    printf("F Written the file\n");
 
     fclose(ofp);
-    free(odata);
     printf("F %d %d file written\n", i, j);
 
     return;
