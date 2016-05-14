@@ -1232,7 +1232,7 @@ void write_spinup_file(int i, int j, control *c, met *m, float *tmax_ij,
             ocnt += ovars;
             doy_cnt++;
 
-            printf("* %d %d %d %d %f %f\n", i, j, ocnt, ovars * odays, (float)year, (float)doy_cnt+1);
+            printf("* %d %d %d %d %f %f\n", i, j, ocnt, ovars * odays, (float)year, (float)doy_cnt);
         }
 
     }
@@ -1485,17 +1485,17 @@ void write_forcing_file(int i, int j, control *c, met *m, float *tmax_ij,
             ocnt += ovars;
             doy_cnt++;
             jj++;
-            printf("** %d %d %d %d %d %f %f\n", i, j, ocnt, 160700, ovars * odays, (float)year, (float)doy_cnt+1);
+            printf("** %d %d %d %d %d %f %f\n", i, j, ocnt, 160700, ovars * odays, (float)year, (float)doy_cnt);
 
         }
         co2_index++;
     }
-
+    printf("About to write file\n");
     if (fwrite(odata, sizeof(float), ovars * odays, ofp) != ovars * odays) {
 	   fprintf(stderr, "Error writing forcing file\n");
 	   exit(EXIT_FAILURE);
     }
-
+    printf("Written the file\n");
 
     fclose(ofp);
     free(odata);
