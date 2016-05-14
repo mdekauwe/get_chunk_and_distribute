@@ -1236,15 +1236,12 @@ void write_spinup_file(int i, int j, control *c, met *m, float *tmax_ij,
         }
 
     }
-    printf("S About to write file\n");
     if (fwrite(odata, sizeof(float), ovars * odays, ofp) != ovars * odays) {
         fprintf(stderr, "Error writing spinup file\n");
 	    exit(EXIT_FAILURE);
     }
-    printf("S Written the file\n");
 
     fclose(ofp);
-    printf("S %d %d file written\n", i, j);
 
 
     return;
@@ -1338,7 +1335,7 @@ void write_forcing_file(int i, int j, control *c, met *m, float *tmax_ij,
                 } else {
                     ndays = 365;
                 }
-                
+
                 en_idx = kk + ndays;
                 break;
             }
@@ -1491,15 +1488,12 @@ void write_forcing_file(int i, int j, control *c, met *m, float *tmax_ij,
         }
         co2_index++;
     }
-    printf("F About to write file\n");
     if (fwrite(odata, sizeof(float), ovars * odays, ofp) != ovars * odays) {
 	   fprintf(stderr, "Error writing forcing file\n");
 	   exit(EXIT_FAILURE);
     }
-    printf("F Written the file\n");
 
     fclose(ofp);
-    printf("F %d %d file written\n", i, j);
 
     return;
 }
