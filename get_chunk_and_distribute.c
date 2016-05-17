@@ -1182,7 +1182,7 @@ void write_spinup_file(int i, int j, control *c, met *m, float *tmax_ij,
                     tair_daylight += tair[hod];
                     tair_am += tair[hod];
                     vpd_am += calc_vpd(tair[hod], vph[hod]);
-                    par_am += par[hod];
+                    par_am += par[hod] * 1800.;
 
                     morning_cnt++;
 
@@ -1191,7 +1191,7 @@ void write_spinup_file(int i, int j, control *c, met *m, float *tmax_ij,
                     tair_daylight += tair[hod];
                     tair_pm += tair[hod];
                     vpd_pm += calc_vpd(tair[hod], vph[hod]);
-                    par_pm += par[hod];
+                    par_pm += par[hod] * 1800.;
 
                     afternoon_cnt++;
                 }
@@ -1225,8 +1225,8 @@ void write_spinup_file(int i, int j, control *c, met *m, float *tmax_ij,
             odata[ocnt+15] = press;
             odata[ocnt+16] = wind;
             odata[ocnt+17] = wind;
-            odata[ocnt+18] = par_am;
-            odata[ocnt+19] = par_pm;
+            odata[ocnt+18] = par_am / 60.0 * 30.0 * (float)morning_cnt;
+            odata[ocnt+19] = par_pm / 60.0 * 30.0 * (float)afternoon_cnt;
 
 
             ocnt += ovars;
