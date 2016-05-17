@@ -1202,8 +1202,6 @@ void write_spinup_file(int i, int j, control *c, met *m, float *tmax_ij,
             tair_pm /= (float)afternoon_cnt;
             vpd_am /= (float)morning_cnt;
             vpd_pm /= (float)afternoon_cnt;
-            /*par_am /= (float)morning_cnt;
-            par_pm /= (float)afternoon_cnt;*/
             tsoil /= (float)NHRS;
 
             /* save everything and do a single big dump at the end */
@@ -1454,8 +1452,6 @@ void write_forcing_file(int i, int j, control *c, met *m, float *tmax_ij,
             tair_pm /= (float)afternoon_cnt;
             vpd_am /= (float)morning_cnt;
             vpd_pm /= (float)afternoon_cnt;
-            par_am /= (float)morning_cnt;
-            par_pm /= (float)afternoon_cnt;
             tsoil /= (float)NHRS;
 
             /* save everything and do a single big dump at the end */
