@@ -1228,6 +1228,29 @@ void write_spinup_file(int i, int j, control *c, met *m, float *tmax_ij,
             odata[ocnt+18] = par_am / (60.0 * 60.0 * (float)morning_cnt);
             odata[ocnt+19] = par_pm / (60.0 * 60.0 * (float)afternoon_cnt);
 
+            /* Fill bad days in AWAP data */
+            if (isnan(odata[ocnt+2])) {
+                odata[ocnt+2] = 15.0;
+            } else if (isnan(odata[ocnt+3])) {
+                odata[ocnt+3] = 0.0;
+            } else if (isnan(odata[ocnt+4])) {
+                odata[ocnt+4] = 0.0;
+            } else if (isnan(odata[ocnt+5])) {
+                odata[ocnt+5] = 15.0;
+            } else if (isnan(odata[ocnt+6])) {
+                odata[ocnt+6] = 15.0;
+            } else if (isnan(odata[ocnt+10])) {
+                odata[ocnt+10] = 1.0;
+            } else if (isnan(odata[ocnt+11])) {
+                odata[ocnt+11] = 1.0;
+            } else if (isnan(odata[ocnt+12])) {
+                odata[ocnt+12] = 350.0;
+            } else if (isnan(odata[ocnt+18])) {
+                odata[ocnt+18] = 1000.0;
+            } else if (isnan(odata[ocnt+19])) {
+                odata[ocnt+19] = 1000.0;
+            }
+            
             ocnt += ovars;
             doy_cnt++;
 
@@ -1455,6 +1478,8 @@ void write_forcing_file(int i, int j, control *c, met *m, float *tmax_ij,
             vpd_pm /= (float)afternoon_cnt;
             tsoil /= (float)NHRS;
 
+
+
             /* save everything and do a single big dump at the end */
             odata[ocnt] = (float)year;
             odata[ocnt+1] = (float)doy_cnt+1;
@@ -1476,6 +1501,31 @@ void write_forcing_file(int i, int j, control *c, met *m, float *tmax_ij,
             odata[ocnt+17] = wind;
             odata[ocnt+18] = par_am / (60.0 * 60.0 * (float)morning_cnt);
             odata[ocnt+19] = par_pm / (60.0 * 60.0 * (float)afternoon_cnt);
+
+            /* Fill bad days in AWAP data */
+            if (isnan(odata[ocnt+2])) {
+                odata[ocnt+2] = 15.0;
+            } else if (isnan(odata[ocnt+3])) {
+                odata[ocnt+3] = 0.0;
+            } else if (isnan(odata[ocnt+4])) {
+                odata[ocnt+4] = 0.0;
+            } else if (isnan(odata[ocnt+5])) {
+                odata[ocnt+5] = 15.0;
+            } else if (isnan(odata[ocnt+6])) {
+                odata[ocnt+6] = 15.0;
+            } else if (isnan(odata[ocnt+10])) {
+                odata[ocnt+10] = 1.0;
+            } else if (isnan(odata[ocnt+11])) {
+                odata[ocnt+11] = 1.0;
+            } else if (isnan(odata[ocnt+12])) {
+                odata[ocnt+12] = 350.0;
+            } else if (isnan(odata[ocnt+18])) {
+                odata[ocnt+18] = 1000.0;
+            } else if (isnan(odata[ocnt+19])) {
+                odata[ocnt+19] = 1000.0;
+            }
+
+
 
             ocnt += ovars;
             doy_cnt++;
