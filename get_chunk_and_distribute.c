@@ -1196,7 +1196,7 @@ void write_spinup_file(int i, int j, control *c, met *m, float *tmax_ij,
                     afternoon_cnt++;
                 }
 
-                printf("* %d %d %d %f %f %f\n", i, j, hod, par[hod], par_am, par_pm);
+                /*printf("* %d %d %d %f %f %f\n", i, j, hod, par[hod], par_am, par_pm);*/
             }
 
             tair_daylight /= (float)(morning_cnt + afternoon_cnt);
@@ -1228,10 +1228,6 @@ void write_spinup_file(int i, int j, control *c, met *m, float *tmax_ij,
             odata[ocnt+18] = par_am / (60.0 * 60.0 * (float)morning_cnt);
             odata[ocnt+19] = par_pm / (60.0 * 60.0 * (float)afternoon_cnt);
 
-            printf("** %f %f\n", par_am / (60.0 * 60.0 * (float)morning_cnt));
-            printf("** %f %f\n", par_pm / (60.0 * 60.0 * (float)afternoon_cnt));
-            printf("*** %f\n", sw);
-            exit(1);
             ocnt += ovars;
             doy_cnt++;
 
@@ -1478,8 +1474,8 @@ void write_forcing_file(int i, int j, control *c, met *m, float *tmax_ij,
             odata[ocnt+15] = press;
             odata[ocnt+16] = wind;
             odata[ocnt+17] = wind;
-            odata[ocnt+18] = par_am / 60.0 * 60.0 * (float)morning_cnt;
-            odata[ocnt+19] = par_pm / 60.0 * 60.0 * (float)afternoon_cnt;
+            odata[ocnt+18] = par_am / (60.0 * 60.0 * (float)morning_cnt);
+            odata[ocnt+19] = par_pm / (60.0 * 60.0 * (float)afternoon_cnt);
 
             ocnt += ovars;
             doy_cnt++;
