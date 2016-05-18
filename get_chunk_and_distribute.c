@@ -1228,8 +1228,8 @@ void write_spinup_file(int i, int j, control *c, met *m, float *tmax_ij,
             odata[ocnt+18] = par_am / (60.0 * 60.0 * (float)morning_cnt);
             odata[ocnt+19] = par_pm / (60.0 * 60.0 * (float)afternoon_cnt);
 
-            printf("** %f %f\n", par_am / (60.0 * 60.0 * (float)morning_cnt);
-            printf("** %f %f\n", par_pm / (60.0 * 60.0 * (float)afternoon_cnt);
+            printf("** %f %f\n", par_am / (60.0 * 60.0 * (float)morning_cnt));
+            printf("** %f %f\n", par_pm / (60.0 * 60.0 * (float)afternoon_cnt));
             printf("*** %f\n", sw);
             exit(1);
             ocnt += ovars;
