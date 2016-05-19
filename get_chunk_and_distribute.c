@@ -1239,15 +1239,15 @@ void write_spinup_file(int i, int j, control *c, met *m, float *tmax_ij,
                 odata[ocnt+5] = 15.0;
             } else if (isnan(odata[ocnt+6])) {
                 odata[ocnt+6] = 15.0;
-            } else if (isnan(odata[ocnt+10])) {
+            } else if (isnan(odata[ocnt+10]) && odata[ocnt+10] < 0.0) {
                 odata[ocnt+10] = 1.0;
-            } else if (isnan(odata[ocnt+11])) {
+            } else if (isnan(odata[ocnt+11]) && odata[ocnt+11] < 0.0) {
                 odata[ocnt+11] = 1.0;
-            } else if (isnan(odata[ocnt+12])) {
+            } else if (isnan(odata[ocnt+12]) && odata[ocnt+12] < 0.0) {
                 odata[ocnt+12] = 350.0;
-            } else if (isnan(odata[ocnt+18])) {
+            } else if (isnan(odata[ocnt+18]) && odata[ocnt+18] < 0.0) {
                 odata[ocnt+18] = 1000.0;
-            } else if (isnan(odata[ocnt+19])) {
+            } else if (isnan(odata[ocnt+19]) && odata[ocnt+19] < 0.0) {
                 odata[ocnt+19] = 1000.0;
             }
             
@@ -1513,15 +1513,15 @@ void write_forcing_file(int i, int j, control *c, met *m, float *tmax_ij,
                 odata[ocnt+5] = 15.0;
             } else if (isnan(odata[ocnt+6])) {
                 odata[ocnt+6] = 15.0;
-            } else if (isnan(odata[ocnt+10])) {
+            } else if (isnan(odata[ocnt+10]) && odata[ocnt+10] < 0.0) {
                 odata[ocnt+10] = 1.0;
-            } else if (isnan(odata[ocnt+11])) {
+            } else if (isnan(odata[ocnt+11]) && odata[ocnt+11] < 0.0) {
                 odata[ocnt+11] = 1.0;
-            } else if (isnan(odata[ocnt+12])) {
+            } else if (isnan(odata[ocnt+12]) && odata[ocnt+12] < 0.0) {
                 odata[ocnt+12] = 350.0;
-            } else if (isnan(odata[ocnt+18])) {
+            } else if (isnan(odata[ocnt+18]) && odata[ocnt+18] < 0.0) {
                 odata[ocnt+18] = 1000.0;
-            } else if (isnan(odata[ocnt+19])) {
+            } else if (isnan(odata[ocnt+19]) && odata[ocnt+19] < 0.0) {
                 odata[ocnt+19] = 1000.0;
             }
 
