@@ -1250,7 +1250,7 @@ void write_spinup_file(int i, int j, control *c, met *m, float *tmax_ij,
             } else if (isnan(odata[ocnt+19]) && odata[ocnt+19] < 0.0) {
                 odata[ocnt+19] = 1000.0;
             }
-            
+
             ocnt += ovars;
             doy_cnt++;
 
@@ -1421,6 +1421,7 @@ void write_forcing_file(int i, int j, control *c, met *m, float *tmax_ij,
             estimate_diurnal_temp(tmin_ij[kk], tmax_ij[kk], day_length,
                                   &(tair[0]));
 
+            printf("** %d %d %f %f %f %f %f %f %f\n", i, j, (float)year, (float)doy_cnt, sw, tmin_ij[kk], tmax_ij[kk], vph09_ij[kk], vph15_ij[kk]);
 
 
             morning_cnt = 0;
@@ -1530,7 +1531,6 @@ void write_forcing_file(int i, int j, control *c, met *m, float *tmax_ij,
             ocnt += ovars;
             doy_cnt++;
             jj++;
-            /*printf("** %d %d %d %d %d %f %f\n", i, j, ocnt, 160700, ovars * odays, (float)year, (float)doy_cnt);*/
 
         }
         co2_index++;
