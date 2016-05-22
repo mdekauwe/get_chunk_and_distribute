@@ -1407,6 +1407,20 @@ void write_forcing_file(int i, int j, control *c, met *m, float *tmax_ij,
             else
                 sw = rad_ij[jj];
 
+            if (year == 1997 && doy_cnt == 142) {
+                printf("*** %f %f %f\n\n\n", rad_ij[jj], rad_clim_nonleap_ij[doy_cnt], rad_clim_leap_ij[doy_cnt]);
+            }
+
+            /* If SW == 0.0, which happens then this whole thing will mess up
+               so use the climatology */
+            if (sw <= 1.0) {
+                if (ndays == 365) {
+                    sw = rad_clim_nonleap_ij[doy_cnt];
+                } else {
+                    sw = rad_clim_leap_ij[doy_cnt];
+                }
+            }
+
             /* zero arrays */
             for (hod = 0; hod < NHRS; hod++) {
                 vph[hod] = 0.0;
