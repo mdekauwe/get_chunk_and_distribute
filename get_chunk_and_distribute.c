@@ -1421,7 +1421,10 @@ void write_forcing_file(int i, int j, control *c, met *m, float *tmax_ij,
             estimate_diurnal_temp(tmin_ij[kk], tmax_ij[kk], day_length,
                                   &(tair[0]));
 
-            printf("** %d %d %f %f %f %f %f %f %f\n", i, j, (float)year, (float)doy_cnt, sw, tmin_ij[kk], tmax_ij[kk], vph09_ij[kk], vph15_ij[kk]);
+            printf("* %d %d %f %f %f %f %f %f %f\n",
+                   i, j, (float)year, (float)doy_cnt,
+                   sw, tmin_ij[kk], tmax_ij[kk],
+                   vph09_ij[kk], vph15_ij[kk]);
 
 
             morning_cnt = 0;
@@ -1526,6 +1529,12 @@ void write_forcing_file(int i, int j, control *c, met *m, float *tmax_ij,
                 odata[ocnt+19] = 1000.0;
             }
 
+            printf("** %d %d %f %f %f %f %f %f %f %f %f %f %f %f\n",
+                   i, j, (float)year, (float)doy_cnt,
+                  odata[ocnt+2], odata[ocnt+3], odata[ocnt+4],
+                  odata[ocnt+5], odata[ocnt+6], odata[ocnt+10],
+                  odata[ocnt+11], odata[ocnt+12], odata[ocnt+18],
+                  odata[ocnt+19]);
 
 
             ocnt += ovars;
