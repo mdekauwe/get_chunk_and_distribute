@@ -1196,7 +1196,6 @@ void write_spinup_file(int i, int j, control *c, met *m, float *tmax_ij,
                     afternoon_cnt++;
                 }
 
-                /*printf("* %d %d %d %f %f %f\n", i, j, hod, par[hod], par_am, par_pm);*/
             }
 
             tair_daylight /= (float)(morning_cnt + afternoon_cnt);
@@ -1228,33 +1227,10 @@ void write_spinup_file(int i, int j, control *c, met *m, float *tmax_ij,
             odata[ocnt+18] = par_am / (60.0 * 60.0 * (float)morning_cnt);
             odata[ocnt+19] = par_pm / (60.0 * 60.0 * (float)afternoon_cnt);
 
-            /* Fill bad days in AWAP data */
-            if (isnan(odata[ocnt+2])) {
-                odata[ocnt+2] = 15.0;
-            } else if (isnan(odata[ocnt+3])) {
-                odata[ocnt+3] = 0.0;
-            } else if (isnan(odata[ocnt+4])) {
-                odata[ocnt+4] = 0.0;
-            } else if (isnan(odata[ocnt+5])) {
-                odata[ocnt+5] = 15.0;
-            } else if (isnan(odata[ocnt+6])) {
-                odata[ocnt+6] = 15.0;
-            } else if (isnan(odata[ocnt+10]) && odata[ocnt+10] < 0.0) {
-                odata[ocnt+10] = 1.0;
-            } else if (isnan(odata[ocnt+11]) && odata[ocnt+11] < 0.0) {
-                odata[ocnt+11] = 1.0;
-            } else if (isnan(odata[ocnt+12]) && odata[ocnt+12] < 0.0) {
-                odata[ocnt+12] = 350.0;
-            } else if (isnan(odata[ocnt+18]) && odata[ocnt+18] < 0.0) {
-                odata[ocnt+18] = 1000.0;
-            } else if (isnan(odata[ocnt+19]) && odata[ocnt+19] < 0.0) {
-                odata[ocnt+19] = 1000.0;
-            }
 
             ocnt += ovars;
             doy_cnt++;
 
-            /*printf("* %d %d %d %d %f %f\n", i, j, ocnt, ovars * odays, (float)year, (float)doy_cnt);*/
         }
 
     }
@@ -1407,9 +1383,6 @@ void write_forcing_file(int i, int j, control *c, met *m, float *tmax_ij,
             else
                 sw = rad_ij[jj];
 
-            if (year == 1997 && doy_cnt == 142) {
-                printf("*** %f %f %f\n\n\n", rad_ij[jj], rad_clim_nonleap_ij[doy_cnt], rad_clim_leap_ij[doy_cnt]);
-            }
 
             /* If SW == 0.0, which happens then this whole thing will mess up
                so use the climatology */
@@ -1523,35 +1496,6 @@ void write_forcing_file(int i, int j, control *c, met *m, float *tmax_ij,
             odata[ocnt+18] = par_am / (60.0 * 60.0 * (float)morning_cnt);
             odata[ocnt+19] = par_pm / (60.0 * 60.0 * (float)afternoon_cnt);
 
-            /* Fill bad days in AWAP data */
-            if (isnan(odata[ocnt+2])) {
-                odata[ocnt+2] = 15.0;
-            } else if (isnan(odata[ocnt+3])) {
-                odata[ocnt+3] = 0.0;
-            } else if (isnan(odata[ocnt+4])) {
-                odata[ocnt+4] = 0.0;
-            } else if (isnan(odata[ocnt+5])) {
-                odata[ocnt+5] = 15.0;
-            } else if (isnan(odata[ocnt+6])) {
-                odata[ocnt+6] = 15.0;
-            } else if (isnan(odata[ocnt+10]) || odata[ocnt+10] < 0.0) {
-                odata[ocnt+10] = 1.0;
-            } else if (isnan(odata[ocnt+11]) || odata[ocnt+11] < 0.0) {
-                odata[ocnt+11] = 1.0;
-            } else if (isnan(odata[ocnt+12]) || odata[ocnt+12] < 0.0) {
-                odata[ocnt+12] = 350.0;
-            } else if (isnan(odata[ocnt+18]) || odata[ocnt+18] < 0.0) {
-                odata[ocnt+18] = 1000.0;
-            } else if (isnan(odata[ocnt+19]) || odata[ocnt+19] < 0.0) {
-                odata[ocnt+19] = 1000.0;
-            }
-
-            /*printf("** %d %d %f %f %f %f %f %f %f %f %f %f %f %f\n",
-                   i, j, (float)year, (float)doy_cnt,
-                  odata[ocnt+2], odata[ocnt+3], odata[ocnt+4],
-                  odata[ocnt+5], odata[ocnt+6], odata[ocnt+10],
-                  odata[ocnt+11], odata[ocnt+12], odata[ocnt+18],
-                  odata[ocnt+19]);*/
 
 
             ocnt += ovars;
