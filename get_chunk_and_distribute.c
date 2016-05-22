@@ -1421,11 +1421,6 @@ void write_forcing_file(int i, int j, control *c, met *m, float *tmax_ij,
             estimate_diurnal_temp(tmin_ij[kk], tmax_ij[kk], day_length,
                                   &(tair[0]));
 
-            printf("* %d %d %f %f %f %f %f %f %f\n",
-                   i, j, (float)year, (float)doy_cnt,
-                   sw, tmin_ij[kk], tmax_ij[kk],
-                   vph09_ij[kk], vph15_ij[kk]);
-
 
             morning_cnt = 0;
             afternoon_cnt = 0;
@@ -1473,6 +1468,14 @@ void write_forcing_file(int i, int j, control *c, met *m, float *tmax_ij,
 
                     afternoon_cnt++;
                 }
+
+                if (year == 1997 && doy_cnt = 142) {
+                    printf("* %d %f %f %f \n",
+                           hod, par[hod], tair[hod], calc_vpd(tair[hod], vph[hod]) );
+                    printf("** %d %f %f %f %f %f %f\n",
+                           hod, par_am, par_pm, tair_am, tair_pm, vpd_am, vpd_pm );
+                }
+
             }
 
             tair_daylight /= (float)(morning_cnt + afternoon_cnt);
@@ -1517,24 +1520,24 @@ void write_forcing_file(int i, int j, control *c, met *m, float *tmax_ij,
                 odata[ocnt+5] = 15.0;
             } else if (isnan(odata[ocnt+6])) {
                 odata[ocnt+6] = 15.0;
-            } else if (isnan(odata[ocnt+10]) && odata[ocnt+10] < 0.0) {
+            } else if (isnan(odata[ocnt+10]) || odata[ocnt+10] < 0.0) {
                 odata[ocnt+10] = 1.0;
-            } else if (isnan(odata[ocnt+11]) && odata[ocnt+11] < 0.0) {
+            } else if (isnan(odata[ocnt+11]) || odata[ocnt+11] < 0.0) {
                 odata[ocnt+11] = 1.0;
-            } else if (isnan(odata[ocnt+12]) && odata[ocnt+12] < 0.0) {
+            } else if (isnan(odata[ocnt+12]) || odata[ocnt+12] < 0.0) {
                 odata[ocnt+12] = 350.0;
-            } else if (isnan(odata[ocnt+18]) && odata[ocnt+18] < 0.0) {
+            } else if (isnan(odata[ocnt+18]) || odata[ocnt+18] < 0.0) {
                 odata[ocnt+18] = 1000.0;
-            } else if (isnan(odata[ocnt+19]) && odata[ocnt+19] < 0.0) {
+            } else if (isnan(odata[ocnt+19]) || odata[ocnt+19] < 0.0) {
                 odata[ocnt+19] = 1000.0;
             }
 
-            printf("** %d %d %f %f %f %f %f %f %f %f %f %f %f %f\n",
+            /*printf("** %d %d %f %f %f %f %f %f %f %f %f %f %f %f\n",
                    i, j, (float)year, (float)doy_cnt,
                   odata[ocnt+2], odata[ocnt+3], odata[ocnt+4],
                   odata[ocnt+5], odata[ocnt+6], odata[ocnt+10],
                   odata[ocnt+11], odata[ocnt+12], odata[ocnt+18],
-                  odata[ocnt+19]);
+                  odata[ocnt+19]);*/
 
 
             ocnt += ovars;
