@@ -1456,12 +1456,6 @@ void write_forcing_file(int i, int j, control *c, met *m, float *tmax_ij,
                     afternoon_cnt++;
                 }
 
-                if (year == 1997 && doy_cnt == 142) {
-                    printf("* %d %f %f %f \n",
-                           hod, par[hod], tair[hod], calc_vpd(tair[hod], vph[hod]) );
-                    printf("** %d %f %f %f %f %f %f\n",
-                           hod, par_am, par_pm, tair_am, tair_pm, vpd_am, vpd_pm );
-                }
 
             }
 
