@@ -1043,7 +1043,7 @@ void write_spinup_file(int i, int j, control *c, met *m, float *tmax_ij,
     long   date_offset;
     int    doy_cnt, morning_cnt, afternoon_cnt;
     int    k=0, kk, yr_to_get, st_idx, en_idx, ndays, year, hod;
-    float  co2=0.0, ndep=0.0, wind=0.0, press=0.0;
+    float  co2=0.0, ndep=0.0, nfix=0.0, wind=0.0, press=0.0;
     float  tsoil=0.0;
     float  sw=0.0, day_length;
     float  vph09_tomorrow, vph15_yesterday;
@@ -1071,7 +1071,7 @@ void write_spinup_file(int i, int j, control *c, met *m, float *tmax_ij,
         }
     }*/
     long  odays = 10958;
-    int   ovars = 20;
+    int   ovars = 21;
     long  ocnt;
     float odata[ovars * odays];
 
@@ -1100,6 +1100,7 @@ void write_spinup_file(int i, int j, control *c, met *m, float *tmax_ij,
 
     co2 = 350.0;        /* spin up using pre 1990 value (1989 = 351.69 */
     ndep = -999.9;
+    nfix = -999.9;
     wind = 3.0; /* Haverd et al. 2012 */
     press = 100.0; /* 1000 mb -> kPa, Haverd et al. 2012 */
 
@@ -1220,12 +1221,13 @@ void write_spinup_file(int i, int j, control *c, met *m, float *tmax_ij,
             odata[ocnt+11] = vpd_pm;
             odata[ocnt+12] = co2;
             odata[ocnt+13] = ndep;
-            odata[ocnt+14] = wind;
-            odata[ocnt+15] = press;
-            odata[ocnt+16] = wind;
+            odata[ocnt+14] = nfix;
+            odata[ocnt+15] = wind;
+            odata[ocnt+16] = press;
             odata[ocnt+17] = wind;
-            odata[ocnt+18] = par_am / (60.0 * 60.0 * (float)morning_cnt);
-            odata[ocnt+19] = par_pm / (60.0 * 60.0 * (float)afternoon_cnt);
+            odata[ocnt+18] = wind;
+            odata[ocnt+19] = par_am / (60.0 * 60.0 * (float)morning_cnt);
+            odata[ocnt+20] = par_pm / (60.0 * 60.0 * (float)afternoon_cnt);
 
 
             ocnt += ovars;
@@ -1259,7 +1261,7 @@ void write_forcing_file(int i, int j, control *c, met *m, float *tmax_ij,
     long date_offset;
     int k=0, kk, jj, hod, yr_to_get, st_idx, en_idx, ndays, doy_cnt, year;
     int st_idx_rad, co2_index;
-    float ndep=0.0, wind=0.0, press=0.0;
+    float ndep=0.0, nfix=0.0, wind=0.0, press=0.0;
     float tsoil=0.0, vpd=0.0;
     float sw=0.0, day_length;
     float vph09_tomorrow, vph15_yesterday;
@@ -1281,7 +1283,7 @@ void write_forcing_file(int i, int j, control *c, met *m, float *tmax_ij,
         }
     } */
     long  odays = 8035;
-    int   ovars = 20;
+    int   ovars = 21;
     long  ocnt;
     float odata[ovars * odays];
 
@@ -1313,6 +1315,7 @@ void write_forcing_file(int i, int j, control *c, met *m, float *tmax_ij,
     */
 
     ndep = -999.9;
+    nfix = -999.9;
     wind = 3.0; /* Haverd et al. 2012 */
     press = 100.0; /* 1000 mb -> kPa, Haverd et al. 2012 */
 
@@ -1483,12 +1486,13 @@ void write_forcing_file(int i, int j, control *c, met *m, float *tmax_ij,
             odata[ocnt+11] = vpd_pm;
             odata[ocnt+12] = co2[co2_index];
             odata[ocnt+13] = ndep;
-            odata[ocnt+14] = wind;
-            odata[ocnt+15] = press;
-            odata[ocnt+16] = wind;
+            odata[ocnt+14] = nfix;
+            odata[ocnt+15] = wind;
+            odata[ocnt+16] = press;
             odata[ocnt+17] = wind;
-            odata[ocnt+18] = par_am / (60.0 * 60.0 * (float)morning_cnt);
-            odata[ocnt+19] = par_pm / (60.0 * 60.0 * (float)afternoon_cnt);
+            odata[ocnt+18] = wind;
+            odata[ocnt+19] = par_am / (60.0 * 60.0 * (float)morning_cnt);
+            odata[ocnt+20] = par_pm / (60.0 * 60.0 * (float)afternoon_cnt);
 
 
 
